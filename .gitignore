@@ -1,0 +1,7 @@
+# MAI caricare dati reali su GitHub
+sistema/dati/
+sistema/db/
+sistema/report/
+sistema/log/
+sistema/anagrafiche/
+__pycache__/

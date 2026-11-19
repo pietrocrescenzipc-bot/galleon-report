@@ -1,0 +1,45 @@
+{
+  "_nota": "Configurazione del sistema report. Modifica solo i valori a destra dei due punti.",
+
+  "cartelle": {
+    "inbox": "dati/inbox",
+    "archivio": "dati/archivio",
+    "scarti": "dati/scarti",
+    "anagrafiche": "anagrafiche",
+    "report": "report",
+    "log": "log"
+  },
+  "database": "db/galleon.sqlite",
+
+  "cartella_obsidian": "",
+  "_nota_obsidian": "Percorso del vault, es. C:/Users/Pietro/Documents/pietro/Galleon . Vuoto = non scrive la nota.",
+
+  "csv": { "separatore": ";", "decimale": "," },
+
+  "aliquota_iva_default": 10,
+  "includi_non_scontrinato_nei_ricavi": true,
+  "giorni_media_costo_acquisto": 30,
+  "giorni_menu_engineering": 30,
+
+  "obiettivi": {
+    "food_cost_max": 0.30,
+    "costo_lavoro_max": 0.30,
+    "prime_cost_max": 0.60,
+    "scostamento_consumi_max": 0.05
+  },
+
+  "categorie_costo_merci": ["merci_food", "merci_beverage"],
+
+  "email": {
+    "attivo": false,
+    "server": "imap.tuoprovider.it",
+    "utente": "report@tuodominio.it",
+    "variabile_password": "GALLEON_IMAP_PWD",
+    "casella": "INBOX",
+    "regole": [
+      { "mittente_contiene": "cassa", "oggetto_contiene": "chiusura", "cartella": "cassa", "estensioni": [".csv"] },
+      { "mittente_contiene": "sdi", "oggetto_contiene": "", "cartella": "fatture", "estensioni": [".xml", ".p7m"] },
+      { "mittente_contiene": "inout", "oggetto_contiene": "", "cartella": "presenze", "estensioni": [".csv"] }
+    ]
+  }
+}

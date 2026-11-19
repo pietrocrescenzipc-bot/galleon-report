@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14202b">
+<title>The Galleon · Plancia di comando</title>
+<!--
+  APP "PLANCIA DI COMANDO" - The Galleon
+  Legge i numeri da dati.js (scritto ogni notte da pipeline.py) e li mostra.
+  Nessuna libreria esterna: funziona con doppio clic anche senza internet.
+-->
+<style>
+:root{--navy:#14202b;--navy2:#1f3242;--oro:#d4a24c;--oro2:#f3e2bf;--crema:#f6f2ea;--card:#fff;--txt:#1d2329;--mut:#6b7380;
+--ok:#2e9e62;--warn:#e0a526;--ko:#d1453b;--blu:#3b7dd8;--r:18px}
+*{box-sizing:border-box}html,body{margin:0}body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--crema);color:var(--txt);-webkit-font-smoothing:antialiased}
+header{background:var(--navy);color:#fff;padding:18px 22px 64px;position:relative}
+.brand{display:flex;align-items:center;gap:12px;max-width:1180px;margin:auto}
+.brand svg{width:40px;height:40px}.brand h1{margin:0;font-size:21px;letter-spacing:.3px}.brand p{margin:2px 0 0;font-size:13px;color:#b9c3cc}
+nav{max-width:1180px;margin:18px auto 0;display:flex;gap:6px;overflow-x:auto}
+nav button{background:transparent;border:0;color:#c9d2da;padding:9px 16px;border-radius:999px;font:500 14px inherit;cursor:pointer;white-space:nowrap;display:flex;gap:7px;align-items:center}
+nav button.on{background:var(--oro);color:var(--navy)}nav button:hover:not(.on){background:var(--navy2)}
+main{max-width:1180px;margin:-44px auto 0;padding:0 16px 100px;position:relative}
+.grid{display:grid;gap:16px}.g3{grid-template-columns:1.4fr 1fr 1fr}.g2{grid-template-columns:1fr 1fr}
+.card{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 2px #0000000d,0 6px 22px #14202b0f}
+.card h2{margin:0 0 4px;font-size:16px}.card .sub{font-size:13px;color:var(--mut);margin:0 0 12px}
+.sec{margin-top:16px}
+.pill{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.ok{background:#e3f4ea;color:#1d6e43}.pill.warn{background:#fcf1d6;color:#8a5f07}.pill.ko{background:#fbe4e2;color:#9b2a22}
+.gauge-big{text-align:center}.gauge-big svg{width:100%;max-width:360px}.gauge-s{text-align:center}.gauge-s svg{width:100%;max-width:270px}
+.needle{transition:transform 1.4s cubic-bezier(.2,1.3,.4,1);transform-origin:150px 160px}
+.seg{display:inline-flex;background:#eee8dc;border-radius:999px;padding:3px;margin-bottom:12px}
+.seg button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font:500 13px inherit;cursor:pointer;color:var(--mut)}
+.seg button.on{background:#fff;color:var(--txt);box-shadow:0 1px 3px #0002}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:#faf7f1;border-radius:14px;padding:12px 14px}.kpi span{font-size:12px;color:var(--mut)}.kpi b{display:block;font-size:22px;margin-top:2px}
+.kpi.ok{box-shadow:inset 3px 0 var(--ok)}.kpi.ko{box-shadow:inset 3px 0 var(--ko)}
+.avvisi{list-style:none;padding:0;margin:0}.avvisi li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0ebe2;font-size:14px;line-height:1.4}
+.avvisi li:last-child{border:0}.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--oro)}.dot.ko{background:var(--ko)}
+svg text{font-family:inherit}.ax{font-size:11px;fill:var(--mut)}
+.chart{width:100%;height:auto;display:block}.bar{transition:opacity .2s;cursor:pointer}.bar:hover{opacity:.75}
+.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;opacity:0;transition:opacity .15s;z-index:9}
+.chips{display:inline-flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;background:#fff;padding:5px;border-radius:999px;box-shadow:0 4px 18px #14202b1a}.chips button{border:0;background:transparent;padding:6px 14px;border-radius:999px;cursor:pointer;font:500 13px inherit}
+.chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cento{display:flex;height:46px;border-radius:12px;overflow:hidden;margin:6px 0 10px}.cento div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;min-width:0;overflow:hidden;white-space:nowrap;transition:flex .6s}
+.leg{display:flex;flex-wrap:wrap;gap:14px;font-size:13px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 6px;text-align:right;border-bottom:1px solid #f0ebe2}th{color:var(--mut);font-weight:500}th:first-child,td:first-child{text-align:left}
+tr.big td{font-weight:700}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+.item{border:1px solid #efe9de;border-radius:14px;padding:12px 14px}.item h3{margin:0;font-size:15px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.item .r{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-top:6px}.item .az{font-size:12.5px;margin-top:8px;color:var(--txt)}
+.cls{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.Star{background:#e3f4ea;color:#1d6e43}.Plowhorse{background:#e3edfb;color:#24508f}.Puzzle{background:#fcf1d6;color:#8a5f07}.Dog{background:#fbe4e2;color:#9b2a22}
+.hb{display:grid;grid-template-columns:130px 1fr 80px;gap:10px;align-items:center;font-size:13px;padding:5px 0}
+.hb .t{background:#f3efe7;border-radius:6px;height:14px;position:relative}.hb .t div{position:absolute;top:0;bottom:0;border-radius:6px}
+.hb .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:#bbb}
+.big-n{font-size:30px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:26px}
+@media(max-width:860px){.g3,.g2{grid-template-columns:1fr}header{padding-bottom:58px}
+ nav{position:fixed;bottom:0;left:0;right:0;margin:0;background:var(--navy);padding:8px 8px calc(8px + env(safe-area-inset-bottom));justify-content:space-around;z-index:5;box-shadow:0 -4px 20px #0003}
+ nav button{flex-direction:column;gap:3px;font-size:11px;padding:6px 8px}.brand h1{font-size:17px}.chips{border-radius:16px}.hb{grid-template-columns:100px 1fr 64px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 48 48" fill="none" stroke="#d4a24c" stroke-width="2.4" stroke-linecap="round"><circle cx="24" cy="10" r="4"/><path d="M24 14v28M14 22h20M8 30c2 8 9 12 16 12s14-4 16-12M8 30l-3 3M40 30l3 3"/></svg>
+    <div><h1>The Galleon · Plancia di comando</h1><p id="sottotitolo"></p></div>
+  </div>
+  <nav id="nav"></nav>
+</header>
+<main id="main"></main>
+<div class="tip" id="tip"></div>
+<script src="dati.js"></script>
+<script>
+const D = window.GALLEON;
+const IT = new Intl.NumberFormat("it-IT", {useGrouping: "always"});
+const eur = (x, d) => x == null ? "–" : "€ " + new Intl.NumberFormat("it-IT", {useGrouping: "always", maximumFractionDigits: d ?? (Math.abs(x) >= 100 ? 0 : 2), minimumFractionDigits: d ?? (Math.abs(x) >= 100 ? 0 : 2)}).format(x);
+const pct = x => x == null ? "–" : (x * 100).toLocaleString("it-IT", {maximumFractionDigits: 1, minimumFractionDigits: 1}) + "%";
+const num = x => x == null ? "–" : IT.format(Math.round(x));
+const gg = s => { const d = new Date(s + "T12:00"); return d.toLocaleDateString("it-IT", {weekday: "short", day: "2-digit", month: "2-digit"}); };
+const meseNome = m => { const [y, mm] = m.split(" ")[0].split("-"); return new Date(y, mm - 1, 15).toLocaleDateString("it-IT", {month: "long", year: "numeric"}); };
+const $ = s => document.querySelector(s);
+const tip = $("#tip");
+function tipOn(e, t) { tip.textContent = t; tip.style.opacity = 1; tip.style.left = (e.clientX + 12) + "px"; tip.style.top = (e.clientY - 34) + "px"; }
+function tipOff() { tip.style.opacity = 0; }
+
+/* ---------- tachimetro ---------- */
+function gauge(val, min, max, zone, centro, sotto, id) {
+  const cx = 150, cy = 160, r = 120, A = v => Math.PI * (1 - (Math.min(Math.max(v, min), max) - min) / (max - min));
+  const P = (a, rr) => [cx + rr * Math.cos(a), cy - rr * Math.sin(a)];
+  let s = `<svg viewBox="0 0 300 215">`;
+  for (const [da, a, col] of zone) {
+    const [x1, y1] = P(A(da), r), [x2, y2] = P(A(a), r);
+    s += `<path d="M${x1},${y1} A${r},${r} 0 0 1 ${x2},${y2}" stroke="${col}" stroke-width="22" fill="none"/>`;
+  }
+  for (let i = 0; i <= 10; i++) { const a = Math.PI * (1 - i / 10), [x1, y1] = P(a, 96), [x2, y2] = P(a, 104);
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c9c2b5" stroke-width="2"/>`; }
+  const gradi = 180 * (Math.min(Math.max(val, min), max) - min) / (max - min);
+  s += `<g class="needle" id="${id}" style="transform:rotate(0deg)"><line x1="${cx}" y1="${cy}" x2="${cx - 92}" y2="${cy}" stroke="#14202b" stroke-width="5" stroke-linecap="round"/></g>
+        <circle cx="${cx}" cy="${cy}" r="11" fill="#14202b"/><circle cx="${cx}" cy="${cy}" r="4" fill="#d4a24c"/>
+        <text x="${cx}" y="${cy + 38}" text-anchor="middle" font-size="26" font-weight="700" fill="#1d2329">${centro}</text>
+        <text x="${cx}" y="${cy + 54}" text-anchor="middle" font-size="12" fill="#6b7380">${sotto}</text></svg>`;
+  setTimeout(() => { const n = document.getElementById(id); if (n) n.style.transform = `rotate(${gradi}deg)`; }, 80);
+  return s;
+}
+const OK = "#2e9e62", WARN = "#e0a526", KO = "#d1453b";
+
+/* ---------- grafico a barre ---------- */
+function barre(valori, etichette, rif, fmt, colori, h = 230) {
+  const w = 760, L = 58, top = Math.max(...valori, rif || 0) * 1.12 || 1, bot = Math.min(0, ...valori);
+  const sx = (w - L - 10) / valori.length, Y = v => 14 + (h - 44) * (top - v) / (top - bot);
+  let s = `<svg class="chart" viewBox="0 0 ${w} ${h}">`;
+  [0.5, 1].forEach(f => { const v = (top / 1.12) * f; s += `<line x1="${L}" x2="${w - 10}" y1="${Y(v)}" y2="${Y(v)}" stroke="#f0ebe2"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" class="ax">${fmt(v)}</text>`; });
+  valori.forEach((v, i) => {
+    const x = L + i * sx, y0 = Y(0), y1 = Y(v);
+    s += `<rect class="bar" data-t="${etichette[i]}: ${fmt(v)}" x="${x + sx * .14}" y="${Math.min(y0, y1)}" width="${sx * .72}" height="${Math.max(1, Math.abs(y0 - y1))}" rx="${Math.min(6, sx * .2)}" fill="${colori[i]}"/>`;
+    if (valori.length <= 12 || i % Math.ceil(valori.length / 8) === 0) s += `<text x="${x + sx / 2}" y="${h - 10}" text-anchor="middle" class="ax">${etichette[i]}</text>`;
+  });
+  if (rif) s += `<line x1="${L}" x2="${w - 10}" y1="${Y(rif)}" y2="${Y(rif)}" stroke="${KO}" stroke-width="2" stroke-dasharray="6 5"/><text x="${w - 12}" y="${Y(rif) - 7}" text-anchor="end" font-size="12" font-weight="600" fill="${KO}" stroke="#fff" stroke-width="4" paint-order="stroke">pareggio ${fmt(rif)}</text>`;
+  return s + "</svg>";
+}
+function linee(serie, etichette, soglia, h = 210) {
+  const w = 760, L = 50, R = 90, vals = serie.flatMap(s => s.v).filter(v => v != null).concat(soglia ? [soglia] : []);
+  const top = Math.max(...vals) * 1.2, bot = Math.max(0, Math.min(...vals) * .7), n = etichette.length;
+  const X = i => L + i * (w - L - R) / Math.max(1, n - 1), Y = v => 14 + (h - 44) * (top - v) / (top - bot);
+  let s = `<svg class="chart" viewBox="0 0 ${w} ${h}">`;
+  if (soglia) s += `<line x1="${L}" x2="${X(n - 1)}" y1="${Y(soglia)}" y2="${Y(soglia)}" stroke="${KO}" stroke-dasharray="6 5" stroke-width="1.5"/><text x="${L - 6}" y="${Y(soglia) + 4}" text-anchor="end" class="ax">${pct(soglia)}</text>`;
+  for (const sr of serie) {
+    s += `<polyline points="${sr.v.map((v, i) => `${X(i)},${Y(v)}`).join(" ")}" fill="none" stroke="${sr.c}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+    sr.v.forEach((v, i) => s += `<circle class="bar" data-t="${sr.n} sett. ${etichette[i]}: ${pct(v)}" cx="${X(i)}" cy="${Y(v)}" r="4.5" fill="#fff" stroke="${sr.c}" stroke-width="2.5"/>`);
+    s += `<text x="${X(n - 1) + 10}" y="${Y(sr.v[n - 1]) + 4}" font-size="12" font-weight="600" fill="${sr.c}">${sr.n} ${pct(sr.v[n - 1])}</text>`;
+  }
+  etichette.forEach((e, i) => { if (n <= 8 || i % 2 === 0) s += `<text x="${X(i)}" y="${h - 10}" text-anchor="middle" class="ax">${e}</text>`; });
+  return s + "</svg>";
+}
+document.addEventListener("mousemove", e => { const t = e.target.closest?.(".bar"); t ? tipOn(e, t.dataset.t) : tipOff(); });
+document.addEventListener("touchstart", e => { const t = e.target.closest?.(".bar"); if (t) tipOn(e.touches[0], t.dataset.t); else tipOff(); }, {passive: true});
+
+/* ---------- VISTA 1: ROTTA ---------- */
+let periodo = 2;
+function vistaRotta() {
+  const b = D.bussola, rp = b.rapporto * 100;
+  const stato = rp < 100 ? ["ko", "In perdita"] : rp < 120 ? ["warn", "Margine stretto"] : ["ok", "In rotta"];
+  const fcMax = D.obiettivi.food_cost_max * 100, clMax = D.obiettivi.costo_lavoro_max * 100;
+  const mese = D.mesi[D.mesi.length - 1];
+  let h = `<div class="grid g3">
+   <div class="card gauge-big"><h2>Rotta verso l'utile</h2><p class="sub">Dove arrivi a fine mese a questo ritmo</p>
+     ${gauge(rp, 50, 200, [[50, 100, KO], [100, 120, WARN], [120, 200, OK]], Math.round(rp) + "%", "del punto di pareggio", "g1")}
+     <span class="pill ${stato[0]}">${stato[1]}</span>
+     <p class="mut" style="margin:10px 0 0">Risultato stimato a fine ${meseNome(mese.mese).split(" ")[0]}: <b style="color:var(--txt)">${eur(b.risultato)}</b></p></div>
+   <div class="card gauge-s"><h2>Food cost</h2><p class="sub">Obiettivo massimo ${fcMax}%</p>
+     ${gauge(b.food_cost * 100, 10, 50, [[10, fcMax - 3, OK], [fcMax - 3, fcMax, WARN], [fcMax, 50, KO]], pct(b.food_cost), "mese in corso", "g2")}</div>
+   <div class="card gauge-s"><h2>Costo del lavoro</h2><p class="sub">Obiettivo massimo ${clMax}%</p>
+     ${gauge(b.costo_lavoro * 100, 10, 50, [[10, clMax - 3, OK], [clMax - 3, clMax, WARN], [clMax, 50, KO]], pct(b.costo_lavoro), "mese in corso", "g3")}</div>
+  </div>`;
+  const nomi = Object.keys(D.kpi), k = D.kpi[nomi[periodo]];
+  h += `<div class="grid g2 sec"><div class="card"><h2>I numeri</h2><p class="sub">Scegli il periodo</p>
+     <div class="seg">${nomi.map((n, i) => `<button class="${i === periodo ? "on" : ""}" onclick="periodo=${i};mostra()">${n.replace("Ultima serata", "Ieri")}</button>`).join("")}</div>
+     <div class="kpis">
+      <div class="kpi"><span>Ricavi netti</span><b>${eur(k["Ricavi netti"])}</b></div>
+      <div class="kpi"><span>Coperti</span><b>${num(k["Coperti"])}</b></div>
+      <div class="kpi"><span>Scontrino medio a coperto</span><b>${eur(k["Scontrino medio/coperto (IVA incl.)"], 2)}</b></div>
+      <div class="kpi"><span>Ricavo per ora lavorata</span><b>${eur(k["Ricavo per ora lavorata"], 2)}</b></div>
+      <div class="kpi ${k["Costo lavoro %"] > D.obiettivi.costo_lavoro_max ? "ko" : "ok"}"><span>Costo lavoro</span><b>${pct(k["Costo lavoro %"])}</b></div>
+      <div class="kpi ${k["Food cost % teorico"] > D.obiettivi.food_cost_max ? "ko" : "ok"}"><span>Food cost</span><b>${pct(k["Food cost % teorico"])}</b></div>
+     </div></div>
+   <div class="card"><h2>Cosa guardare oggi</h2><p class="sub">Avvisi calcolati automaticamente</p>
+     <ul class="avvisi">${D.avvisi.length ? D.avvisi.map(a => `<li><span class="dot ${a.alto ? "ko" : ""}"></span>${a.testo}</li>`).join("") : "<li>Tutto sotto controllo.</li>"}</ul></div></div>`;
+  const G = D.giorni;
+  h += `<div class="card sec"><h2>Incassi delle ultime serate</h2><p class="sub">Verde = serata sopra il pareggio · tocca una barra per il dettaglio</p>
+    ${barre(G.map(g => g.ricavi), G.map(g => gg(g.data)), b.pareggio_giorno, x => eur(x, 0), G.map(g => g.ricavi >= b.pareggio_giorno ? OK : "#d4a24c"))}</div>`;
+  const S = D.settimane;
+  h += `<div class="card sec"><h2>Food cost e costo del lavoro, settimana per settimana</h2><p class="sub">Linea rossa = obiettivo massimo</p>
+    ${linee([{n: "Lavoro", v: S.map(s => s.lavoro), c: "#3b7dd8"}, {n: "Food", v: S.map(s => s.food), c: "#d4a24c"}], S.map(s => s.da.slice(8) + "/" + s.da.slice(5, 7)), D.obiettivi.food_cost_max)}</div>`;
+  return h;
+}
+
+/* ---------- VISTA 2: CONTO ECONOMICO ---------- */
+let meseSel = null;
+function vistaConto() {
+  const M = D.mesi; if (meseSel == null) meseSel = M.length - 1; const m = M[meseSel];
+  const parti = [["Merci", m.costo_merci, "#d4a24c"], ["Personale", m.personale, "#3b7dd8"], ["Altri costi", m.altri, "#8a94a3"], ["Costi fissi", m.fissi, "#5b6573"], [m.risultato >= 0 ? "Utile" : "Perdita", Math.abs(m.risultato), m.risultato >= 0 ? OK : KO]];
+  const su100 = v => Math.round(v / m.ricavi * 100);
+  let h = `<div class="chips">${M.map((x, i) => `<button class="${i === meseSel ? "on" : ""}" onclick="meseSel=${i};mostra()">${meseNome(x.mese)}${x.in_corso ? " ·  in corso" : ""}</button>`).join("")}</div>
+  <div class="grid g2"><div class="card"><h2>Su 100 € incassati, dove vanno?</h2><p class="sub">${meseNome(m.mese)} · ricavi netti ${eur(m.ricavi)}${m.in_corso ? " (mese in corso, costi fissi in proporzione ai giorni)" : ""}</p>
+    <div class="cento">${parti.map(p => `<div style="flex:${Math.max(p[1], 0.001)};background:${p[2]}" title="${p[0]}">${su100(p[1]) >= 6 ? su100(p[1]) + " €" : ""}</div>`).join("")}</div>
+    <div class="leg">${parti.map(p => `<span><i style="background:${p[2]}"></i>${p[0]} <b>${su100(p[1])} €</b></span>`).join("")}</div>
+    <div style="display:flex;gap:28px;margin-top:18px;flex-wrap:wrap">
+      <div><div class="mut">Risultato gestionale</div><div class="big-n" style="color:${m.risultato >= 0 ? OK : KO}">${eur(m.risultato)}</div></div>
+      <div><div class="mut">Ricavi di pareggio</div><div class="big-n">${eur(m.pareggio)}</div></div>
+      <div><div class="mut">Margine sul pareggio</div><div class="big-n">${pct(m.ricavi / m.pareggio - 1)}</div></div></div></div>
+   <div class="card"><h2>Indicatori</h2><p class="sub">Inventario: ${m.rimanenze}</p><table>
+    <tr><th>Voce</th><th>Valore</th><th>Obiettivo</th></tr>
+    <tr><td>Food cost effettivo</td><td>${pct(m.food_eff)}</td><td>≤ ${pct(D.obiettivi.food_cost_max)}</td></tr>
+    <tr><td>Food cost teorico (ricette)</td><td>${pct(m.food_teo)}</td><td></td></tr>
+    <tr><td>Costo del lavoro</td><td>${pct(m.lavoro)}</td><td>≤ ${pct(D.obiettivi.costo_lavoro_max)}</td></tr>
+    <tr><td>Prime cost (merci + lavoro)</td><td>${pct(m.prime)}</td><td>≤ ${pct(D.obiettivi.prime_cost_max)}</td></tr>
+    <tr><td>Coperti</td><td>${num(m.coperti)}</td><td></td></tr>
+    <tr><td>di cui ricavi non scontrinati</td><td>${eur(m.non_scontrinato)}</td><td></td></tr></table></div></div>
+  <div class="card sec"><h2>Conto economico mese per mese</h2><table>
+    <tr><th>Voce</th>${M.map(x => `<th>${meseNome(x.mese).split(" ")[0]}</th>`).join("")}</tr>
+    ${[["Ricavi netti", "ricavi", 1], ["Costo merci", "costo_merci"], ["Personale", "personale"], ["Altri costi", "altri"], ["Costi fissi", "fissi"], ["Risultato", "risultato", 1]]
+      .map(([l, k, b]) => `<tr class="${b ? "big" : ""}"><td>${l}</td>${M.map(x => `<td style="${k === "risultato" ? "color:" + (x[k] >= 0 ? OK : KO) : ""}">${eur(x[k])}</td>`).join("")}</tr>`).join("")}</table>
+    ${barre(M.map(x => x.risultato), M.map(x => meseNome(x.mese).split(" ")[0]), null, x => eur(x, 0), M.map(x => x.risultato >= 0 ? OK : KO), 190)}</div>`;
+  return h;
+}
+
+/* ---------- VISTA 3: MENU ENGINEERING ---------- */
+let gruppo = null;
+function vistaMenu() {
+  const gruppi = [...new Set(D.menu.map(x => x.gruppo))]; if (!gruppo) gruppo = gruppi[gruppi.length - 1];
+  const it = D.menu.filter(x => x.gruppo === gruppo), n = it.length;
+  const mcMedio = it.reduce((a, x) => a + x.margine_tot, 0) / it.reduce((a, x) => a + x.venduti, 0), popMedia = 0.7 / n;
+  const w = 560, h = 380, P = 46;
+  const xs = it.map(x => x.mix / popMedia), ys = it.map(x => x.margine / mcMedio);
+  const xM = Math.max(2, ...xs) * 1.1, yMin = Math.min(.5, ...ys) * .9, yM = Math.max(1.5, ...ys) * 1.08;
+  const X = v => P + (w - P - 14) * v / xM, Y = v => 14 + (h - P - 14) * (yM - v) / (yM - yMin);
+  const col = {Star: OK, Plowhorse: "#3b7dd8", Puzzle: WARN, Dog: KO};
+  let s = `<svg class="chart" viewBox="0 0 ${w} ${h}">
+    <rect x="${X(1)}" y="${Y(yM)}" width="${X(xM) - X(1)}" height="${Y(1) - Y(yM)}" fill="#e3f4ea" opacity=".6"/>
+    <rect x="${P}" y="${Y(yM)}" width="${X(1) - P}" height="${Y(1) - Y(yM)}" fill="#fcf1d6" opacity=".6"/>
+    <rect x="${X(1)}" y="${Y(1)}" width="${X(xM) - X(1)}" height="${Y(yMin) - Y(1)}" fill="#e3edfb" opacity=".6"/>
+    <rect x="${P}" y="${Y(1)}" width="${X(1) - P}" height="${Y(yMin) - Y(1)}" fill="#fbe4e2" opacity=".6"/>
+    <text x="${X(xM) - 8}" y="${Y(yM) + 18}" text-anchor="end" font-weight="700" font-size="13" fill="#1d6e43">STAR</text>
+    <text x="${P + 8}" y="${Y(yM) + 18}" font-weight="700" font-size="13" fill="#8a5f07">PUZZLE</text>
+    <text x="${X(xM) - 8}" y="${Y(yMin) - 8}" text-anchor="end" font-weight="700" font-size="13" fill="#24508f">PLOWHORSE</text>
+    <text x="${P + 8}" y="${Y(yMin) - 8}" font-weight="700" font-size="13" fill="#9b2a22">DOG</text>
+    <text x="${(w + P) / 2}" y="${h - 8}" text-anchor="middle" class="ax">popolarità →</text>
+    <text x="14" y="${(h - P) / 2}" class="ax" transform="rotate(-90 14 ${(h - P) / 2})" text-anchor="middle">margine →</text>`;
+  it.forEach((x, i) => { s += `<g class="bar" data-t="${x.nome}: ${num(x.venduti)} venduti, margine ${eur(x.margine, 2)}">
+      <circle cx="${X(xs[i])}" cy="${Y(ys[i])}" r="${8 + Math.sqrt(x.margine_tot) / 8}" fill="${col[x.classe]}" opacity=".85" stroke="#fff" stroke-width="2"/>
+      <text x="${X(xs[i])}" y="${i % 2 ? Y(ys[i]) + 24 + Math.sqrt(x.margine_tot) / 8 : Y(ys[i]) - 14 - Math.sqrt(x.margine_tot) / 8}" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke" font-size="12" font-weight="600" fill="#1d2329">${x.nome}</text></g>`; });
+  s += "</svg>";
+  return `<div class="chips">${gruppi.map(g => `<button class="${g === gruppo ? "on" : ""}" onclick="gruppo='${g}';mostra()">${g}</button>`).join("")}</div>
+   <div class="grid g2"><div class="card"><h2>Matrice del menu · ${gruppo}</h2><p class="sub">Ultimi 30 giorni, prezzi e costi aggiornati · cerchio più grande = più margine totale</p>${s}</div>
+   <div class="card"><h2>Cosa fare</h2><p class="sub">Ordinati per margine totale portato a casa</p><div class="items">
+   ${it.map(x => `<div class="item"><h3>${x.nome}<span class="cls ${x.classe}">${x.classe}</span></h3>
+      <div class="r"><span>${num(x.venduti)} venduti · ${pct(x.mix)}</span><b style="color:var(--txt)">+${eur(x.margine, 2)}</b></div>
+      <div class="r"><span>Prezzo ${eur(x.prezzo, 2)} · costo ${eur(x.costo, 2)}</span><span>food ${pct(x.food)}</span></div>
+      <div class="az">→ ${x.azione}</div></div>`).join("")}</div></div></div>`;
+}
+
+/* ---------- VISTA 4: SPRECHI ---------- */
+function vistaSprechi() {
+  const R = D.consumi.righe.filter(r => r.teorico > 0), maxV = Math.max(...R.map(r => Math.abs(r.valore)));
+  const tot = R.reduce((a, r) => a + Math.max(0, r.valore), 0), soglia = D.obiettivi.scostamento_consumi_max;
+  return `<div class="grid g2"><div class="card"><h2>Valore dei consumi in eccesso</h2><p class="sub">${D.consumi.periodo}</p>
+    <div class="big-n" style="color:${tot > 100 ? KO : OK}">${eur(tot)}</div><p class="mut">consumati in più di quanto giustificano le vendite (spreco, porzioni abbondanti, omaggi, ammanchi)</p></div>
+    <div class="card"><h2>Come leggerlo</h2><p class="mut" style="line-height:1.6;margin:0">Consumo reale = inventario iniziale + acquisti − inventario finale.<br>Consumo teorico = pizze e piatti venduti × ricetta.<br>
+    Barra rossa a destra = consumato più del teorico oltre il ${pct(soglia)} di tolleranza. Un piccolo scostamento è normale (errori di conta).</p></div></div>
+    <div class="card sec"><h2>Ingrediente per ingrediente</h2><p class="sub">Differenza in euro: a destra eccesso, a sinistra risparmio</p>
+    ${R.map(r => { const l = Math.abs(r.valore) / maxV * 50, ko = r.pct > soglia && r.valore > 20;
+      return `<div class="hb"><span>${r.ingrediente.replace(/_/g, " ")}<br><small class="mut">${pct(r.pct)} · ${IT.format(Math.round(r.diff * 10) / 10)} ${r.unita}</small></span>
+      <div class="t"><span class="mid"></span><div style="${r.valore >= 0 ? `left:50%;width:${l}%` : `right:50%;width:${l}%`};background:${ko ? KO : r.valore >= 0 ? "#e8b98a" : "#9fcfb3"}"></div></div>
+      <b style="text-align:right;color:${ko ? KO : "inherit"}">${eur(Math.round(r.valore) || 0, 0)}</b></div>`; }).join("")}</div>`;
+}
+
+/* ---------- VISTA 5: DATI ---------- */
+function vistaDati() {
+  return `<div class="grid g2"><div class="card"><h2>Qualità dei dati</h2><p class="sub">Da sistemare per avere numeri affidabili</p>
+    <ul class="avvisi">${D.qualita.length ? D.qualita.map(q => `<li><span class="dot"></span>${q}</li>`).join("") : "<li>Tutto in ordine.</li>"}</ul></div>
+    <div class="card"><h2>Da dove arrivano i numeri</h2><ul class="avvisi">
+     <li><span class="dot" style="background:${OK}"></span>Cassa: chiusure serali (vendite, coperti, canali)</li>
+     <li><span class="dot" style="background:${OK}"></span>Fatture elettroniche d'acquisto (costi e prezzi aggiornati)</li>
+     <li><span class="dot" style="background:${OK}"></span>Presenze: ore lavorate × costo orario</li>
+     <li><span class="dot" style="background:${OK}"></span>Inventario di inizio mese</li></ul>
+     <p class="mut">Ultimo aggiornamento: ${D.generato}. Calcolato sul PC del locale, nessun dato grezzo esce dal computer.</p></div></div>`;
+}
+
+/* ---------- navigazione ---------- */
+const VISTE = [["rotta", "Rotta", vistaRotta, "M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"], ["conto", "Conto", vistaConto, "M4 20V10M10 20V4M16 20v-7M22 20H2"],
+  ["menu", "Menu", vistaMenu, "M4 6h16M4 12h16M4 18h10"], ["sprechi", "Sprechi", vistaSprechi, "M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"], ["dati", "Dati", vistaDati, "M12 3a9 9 0 100 18 9 9 0 000-18zM12 8v5M12 16h.01"]];
+let vista = (location.hash || "#rotta").slice(1);
+function mostra() {
+  $("#nav").innerHTML = VISTE.map(([id, n, , ic]) => `<button class="${id === vista ? "on" : ""}" onclick="vista='${id}';location.hash='${id}';mostra();scrollTo(0,0)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${ic}"/></svg>${n}</button>`).join("");
+  const v = VISTE.find(x => x[0] === vista) || VISTE[0];
+  $("#main").innerHTML = v[2]() + `<footer>The Galleon · Pub &amp; Pizzeria · aggiornato il ${D.generato}</footer>`;
+}
+$("#sottotitolo").textContent = `Dati fino a ${gg(D.ultimo_giorno)} · aggiornato il ${D.generato}`;
+window.addEventListener("hashchange", () => { vista = location.hash.slice(1) || "rotta"; mostra(); });
+mostra();
+</script>
+</body>
+</html>
