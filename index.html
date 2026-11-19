@@ -10,62 +10,84 @@
   Legge i numeri da dati.js (scritto ogni notte da pipeline.py) e li mostra.
   Nessuna libreria esterna: funziona con doppio clic anche senza internet.
 -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--navy:#14202b;--navy2:#1f3242;--oro:#d4a24c;--oro2:#f3e2bf;--crema:#f6f2ea;--card:#fff;--txt:#1d2329;--mut:#6b7380;
---ok:#2e9e62;--warn:#e0a526;--ko:#d1453b;--blu:#3b7dd8;--r:18px}
-*{box-sizing:border-box}html,body{margin:0}body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--crema);color:var(--txt);-webkit-font-smoothing:antialiased}
-header{background:var(--navy);color:#fff;padding:18px 22px 64px;position:relative}
-.brand{display:flex;align-items:center;gap:12px;max-width:1180px;margin:auto}
-.brand svg{width:40px;height:40px}.brand h1{margin:0;font-size:21px;letter-spacing:.3px}.brand p{margin:2px 0 0;font-size:13px;color:#b9c3cc}
-nav{max-width:1180px;margin:18px auto 0;display:flex;gap:6px;overflow-x:auto}
-nav button{background:transparent;border:0;color:#c9d2da;padding:9px 16px;border-radius:999px;font:500 14px inherit;cursor:pointer;white-space:nowrap;display:flex;gap:7px;align-items:center}
-nav button.on{background:var(--oro);color:var(--navy)}nav button:hover:not(.on){background:var(--navy2)}
-main{max-width:1180px;margin:-44px auto 0;padding:0 16px 100px;position:relative}
+:root{--navy:#0f1b26;--navy2:#1b2d3e;--oro:#d4a24c;--oro2:#f3e2bf;--bg:#f5f0e6;--card:#fff;--card2:#faf6ee;--line:#efe8dc;--txt:#1b222a;--mut:#6b7380;
+--ok:#2e9e62;--warn:#e0a526;--ko:#d1453b;--blu:#3b7dd8;--r:20px;--sh:0 1px 2px #0000000a,0 8px 28px #0f1b2612;--needle:#0f1b26;--quad:.55}
+[data-theme=dark]{--bg:#0a1219;--card:#13202c;--card2:#1a2a38;--line:#22344a;--txt:#e9e6df;--mut:#94a1ae;--sh:0 1px 2px #0004,0 8px 28px #0006;--needle:#e9e6df;--quad:.16;--oro2:#3a2f1a}
+*{box-sizing:border-box}html,body{margin:0}body{font-family:Inter,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased;transition:background .3s}
+header{background:radial-gradient(1200px 300px at 85% -50%,#2a4560 0,transparent 60%),var(--navy);color:#fff;padding:20px 22px 74px}
+.brand{display:flex;align-items:center;gap:14px;max-width:1180px;margin:auto}
+.logo{width:46px;height:46px;border-radius:14px;background:#ffffff10;border:1px solid #ffffff1f;display:grid;place-items:center;flex:none}.logo svg{width:28px;height:28px}
+.brand h1{margin:0;font:700 23px Fraunces,Georgia,serif;letter-spacing:.2px}.brand p{margin:3px 0 0;font-size:13px;color:#aeb9c4}
+.tema{margin-left:auto;background:#ffffff12;border:1px solid #ffffff22;color:#fff;width:40px;height:40px;border-radius:12px;cursor:pointer;display:grid;place-items:center}
+.tema:hover{background:#ffffff22}
+nav{max-width:1180px;margin:20px auto 0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav button{background:transparent;border:0;color:#c3ccd5;padding:10px 16px;border-radius:999px;font:500 14px Inter,sans-serif;cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center;transition:all .2s}
+nav button.on{background:var(--oro);color:var(--navy);box-shadow:0 4px 14px #d4a24c55}nav button:hover:not(.on){background:#ffffff14;color:#fff}
+main{max-width:1180px;margin:-52px auto 0;padding:0 16px 110px;position:relative}
 .grid{display:grid;gap:16px}.g3{grid-template-columns:1.4fr 1fr 1fr}.g2{grid-template-columns:1fr 1fr}
-.card{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 2px #0000000d,0 6px 22px #14202b0f}
-.card h2{margin:0 0 4px;font-size:16px}.card .sub{font-size:13px;color:var(--mut);margin:0 0 12px}
+.card{background:var(--card);border-radius:var(--r);padding:20px 22px;box-shadow:var(--sh);animation:su .5s ease-out both}
+.grid>.card:nth-child(2){animation-delay:.06s}.grid>.card:nth-child(3){animation-delay:.12s}
+@keyframes su{from{opacity:0;transform:translateY(10px)}}
+.card h2{margin:0 0 4px;font-size:16px;font-weight:600}.card .sub{font-size:13px;color:var(--mut);margin:0 0 14px}
 .sec{margin-top:16px}
-.pill{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600}
-.pill.ok{background:#e3f4ea;color:#1d6e43}.pill.warn{background:#fcf1d6;color:#8a5f07}.pill.ko{background:#fbe4e2;color:#9b2a22}
-.gauge-big{text-align:center}.gauge-big svg{width:100%;max-width:360px}.gauge-s{text-align:center}.gauge-s svg{width:100%;max-width:270px}
-.needle{transition:transform 1.4s cubic-bezier(.2,1.3,.4,1);transform-origin:150px 160px}
-.seg{display:inline-flex;background:#eee8dc;border-radius:999px;padding:3px;margin-bottom:12px}
-.seg button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font:500 13px inherit;cursor:pointer;color:var(--mut)}
-.seg button.on{background:#fff;color:var(--txt);box-shadow:0 1px 3px #0002}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.kpi{background:#faf7f1;border-radius:14px;padding:12px 14px}.kpi span{font-size:12px;color:var(--mut)}.kpi b{display:block;font-size:22px;margin-top:2px}
-.kpi.ok{box-shadow:inset 3px 0 var(--ok)}.kpi.ko{box-shadow:inset 3px 0 var(--ko)}
-.avvisi{list-style:none;padding:0;margin:0}.avvisi li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0ebe2;font-size:14px;line-height:1.4}
-.avvisi li:last-child{border:0}.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--oro)}.dot.ko{background:var(--ko)}
-svg text{font-family:inherit}.ax{font-size:11px;fill:var(--mut)}
+.hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:16px;padding:16px 22px}
+.hero .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex:none}
+.hero h2{font:700 21px Fraunces,Georgia,serif;margin:0}.hero p{margin:3px 0 0;color:var(--mut);font-size:14px}
+.pill{display:inline-block;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.ok,.okb{background:#e3f4ea;color:#1d6e43}.pill.warn,.warnb{background:#fcf1d6;color:#8a5f07}.pill.ko,.kob{background:#fbe4e2;color:#9b2a22}
+[data-theme=dark] .pill.ok,[data-theme=dark] .okb{background:#173a2a;color:#7fd9a8}[data-theme=dark] .pill.warn,[data-theme=dark] .warnb{background:#3d3115;color:#f1c96b}[data-theme=dark] .pill.ko,[data-theme=dark] .kob{background:#43201d;color:#f19a92}
+.gauge-big{text-align:center}.gauge-big svg{width:100%;max-width:380px}.gauge-s{text-align:center}.gauge-s svg{width:100%;max-width:270px}
+.needle{transition:transform 1.6s cubic-bezier(.2,1.25,.4,1);transform-origin:150px 160px}
+.gc{font:700 30px Inter,sans-serif;fill:var(--txt)}.tick{stroke:var(--line)}.hub{fill:var(--needle)}
+.seg{display:inline-flex;background:var(--card2);border-radius:999px;padding:4px;margin-bottom:14px;border:1px solid var(--line)}
+.seg button{border:0;background:transparent;padding:7px 15px;border-radius:999px;font:500 13px Inter,sans-serif;cursor:pointer;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--txt);box-shadow:0 1px 4px #0002}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.kpi{background:var(--card2);border-radius:16px;padding:13px 15px;position:relative;overflow:hidden;border:1px solid var(--line)}
+.kpi .h{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mut)}.kpi .h svg{width:15px;height:15px;opacity:.8}
+.kpi b{display:block;font-size:24px;font-weight:700;margin-top:4px;letter-spacing:-.3px}
+.kpi.ok{border-left:4px solid var(--ok)}.kpi.ko{border-left:4px solid var(--ko)}
+.delta{font-size:12px;font-weight:600;margin-top:2px}.delta.su{color:var(--ok)}.delta.giu{color:var(--ko)}
+.spark{position:absolute;right:10px;bottom:10px;width:70px;height:26px;opacity:.9}
+.avvisi{list-style:none;padding:0;margin:0}.avvisi li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.45}
+.avvisi li:last-child{border:0}.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--oro);box-shadow:0 0 0 4px #d4a24c22}.dot.ko{background:var(--ko);box-shadow:0 0 0 4px #d1453b22}
+svg text{font-family:Inter,sans-serif}.ax{font-size:11px;fill:var(--mut)}.lbl{fill:var(--txt);stroke:var(--card);stroke-width:3px;paint-order:stroke;font-size:12px;font-weight:600}
+.grid-l{stroke:var(--line)}.quad{opacity:var(--quad)}.pt{fill:var(--card)}
 .chart{width:100%;height:auto;display:block}.bar{transition:opacity .2s;cursor:pointer}.bar:hover{opacity:.75}
-.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;opacity:0;transition:opacity .15s;z-index:9}
-.chips{display:inline-flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;background:#fff;padding:5px;border-radius:999px;box-shadow:0 4px 18px #14202b1a}.chips button{border:0;background:transparent;padding:6px 14px;border-radius:999px;cursor:pointer;font:500 13px inherit}
-.chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.cento{display:flex;height:46px;border-radius:12px;overflow:hidden;margin:6px 0 10px}.cento div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;min-width:0;overflow:hidden;white-space:nowrap;transition:flex .6s}
+rect.bar{transform-box:fill-box;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.3,1) both}@keyframes grow{from{transform:scaleY(0)}}
+.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;padding:7px 11px;border-radius:10px;font-size:12px;font-weight:500;opacity:0;transition:opacity .15s;z-index:9;box-shadow:0 6px 20px #0004}
+.chips{display:inline-flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;background:var(--card);padding:5px;border-radius:999px;box-shadow:var(--sh)}
+.chips button{border:0;background:transparent;padding:8px 16px;border-radius:999px;cursor:pointer;font:500 13px Inter,sans-serif;color:var(--txt);text-transform:capitalize}
+.chips button.on{background:var(--navy);color:#fff}[data-theme=dark] .chips button.on{background:var(--oro);color:var(--navy)}
+.cento{display:flex;height:50px;border-radius:14px;overflow:hidden;margin:6px 0 12px;gap:3px}.cento div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;min-width:0;overflow:hidden;white-space:nowrap;border-radius:6px}
 .leg{display:flex;flex-wrap:wrap;gap:14px;font-size:13px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 6px;text-align:right;border-bottom:1px solid #f0ebe2}th{color:var(--mut);font-weight:500}th:first-child,td:first-child{text-align:left}
-tr.big td{font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 6px;text-align:right;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:500;text-transform:capitalize}th:first-child,td:first-child{text-align:left}
+tr.big td{font-weight:700}.tw{overflow-x:auto}
 .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
-.item{border:1px solid #efe9de;border-radius:14px;padding:12px 14px}.item h3{margin:0;font-size:15px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.item .r{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-top:6px}.item .az{font-size:12.5px;margin-top:8px;color:var(--txt)}
-.cls{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.item{border:1px solid var(--line);border-radius:16px;padding:13px 15px;background:var(--card2);transition:transform .2s}.item:hover{transform:translateY(-2px)}
+.item h3{margin:0;font-size:15px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.item .r{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-top:6px}.item .az{font-size:12.5px;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)}
+.cls{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:600;white-space:nowrap}
 .Star{background:#e3f4ea;color:#1d6e43}.Plowhorse{background:#e3edfb;color:#24508f}.Puzzle{background:#fcf1d6;color:#8a5f07}.Dog{background:#fbe4e2;color:#9b2a22}
-.hb{display:grid;grid-template-columns:130px 1fr 80px;gap:10px;align-items:center;font-size:13px;padding:5px 0}
-.hb .t{background:#f3efe7;border-radius:6px;height:14px;position:relative}.hb .t div{position:absolute;top:0;bottom:0;border-radius:6px}
-.hb .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:#bbb}
-.big-n{font-size:30px;font-weight:700}.mut{color:var(--mut);font-size:13px}
-footer{text-align:center;color:var(--mut);font-size:12px;margin-top:26px}
-@media(max-width:860px){.g3,.g2{grid-template-columns:1fr}header{padding-bottom:58px}
- nav{position:fixed;bottom:0;left:0;right:0;margin:0;background:var(--navy);padding:8px 8px calc(8px + env(safe-area-inset-bottom));justify-content:space-around;z-index:5;box-shadow:0 -4px 20px #0003}
- nav button{flex-direction:column;gap:3px;font-size:11px;padding:6px 8px}.brand h1{font-size:17px}.chips{border-radius:16px}.hb{grid-template-columns:100px 1fr 64px}}
+.hb{display:grid;grid-template-columns:140px 1fr 80px;gap:12px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+.hb .t{background:var(--card2);border-radius:6px;height:12px;position:relative}.hb .t div{position:absolute;top:0;bottom:0;border-radius:6px}
+.hb .mid{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:var(--line)}
+.big-n{font-size:30px;font-weight:700;letter-spacing:-.5px}.mut{color:var(--mut);font-size:13px}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:28px}
+@media(max-width:860px){.g3,.g2{grid-template-columns:1fr}header{padding:16px 16px 66px}.brand h1{font-size:21px}.pc{display:none}main{padding:0 12px 110px}
+ nav{position:fixed;bottom:12px;left:12px;right:12px;margin:0;background:#0f1b26ee;backdrop-filter:blur(10px);padding:7px;justify-content:space-around;z-index:5;border-radius:22px;box-shadow:0 8px 30px #0006}
+ nav button{flex-direction:column;gap:3px;font-size:11px;padding:7px 10px;border-radius:15px}.chips{border-radius:16px}.hb{grid-template-columns:100px 1fr 60px}.card{padding:18px}}
 </style>
 </head>
 <body>
 <header>
   <div class="brand">
-    <svg viewBox="0 0 48 48" fill="none" stroke="#d4a24c" stroke-width="2.4" stroke-linecap="round"><circle cx="24" cy="10" r="4"/><path d="M24 14v28M14 22h20M8 30c2 8 9 12 16 12s14-4 16-12M8 30l-3 3M40 30l3 3"/></svg>
-    <div><h1>The Galleon · Plancia di comando</h1><p id="sottotitolo"></p></div>
+    <div class="logo"><svg viewBox="0 0 48 48" fill="none" stroke="#d4a24c" stroke-width="2.6" stroke-linecap="round"><circle cx="24" cy="10" r="4"/><path d="M24 14v28M14 22h20M8 30c2 8 9 12 16 12s14-4 16-12M8 30l-3 3M40 30l3 3"/></svg></div>
+    <div><h1>The Galleon<span class="pc"> · Plancia di comando</span></h1><p id="sottotitolo"></p></div>
+    <button class="tema" id="tema" aria-label="Cambia tema chiaro/scuro" onclick="cambiaTema()"></button>
   </div>
   <nav id="nav"></nav>
 </header>
@@ -89,35 +111,61 @@ function tipOff() { tip.style.opacity = 0; }
 function gauge(val, min, max, zone, centro, sotto, id) {
   const cx = 150, cy = 160, r = 120, A = v => Math.PI * (1 - (Math.min(Math.max(v, min), max) - min) / (max - min));
   const P = (a, rr) => [cx + rr * Math.cos(a), cy - rr * Math.sin(a)];
-  let s = `<svg viewBox="0 0 300 215">`;
+  let s = `<svg viewBox="0 0 300 228">`;
   for (const [da, a, col] of zone) {
     const [x1, y1] = P(A(da), r), [x2, y2] = P(A(a), r);
-    s += `<path d="M${x1},${y1} A${r},${r} 0 0 1 ${x2},${y2}" stroke="${col}" stroke-width="22" fill="none"/>`;
+    s += `<path d="M${x1},${y1} A${r},${r} 0 0 1 ${x2},${y2}" stroke="${col}" stroke-width="22" stroke-linecap="butt" fill="none"/>`;
   }
   for (let i = 0; i <= 10; i++) { const a = Math.PI * (1 - i / 10), [x1, y1] = P(a, 96), [x2, y2] = P(a, 104);
-    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c9c2b5" stroke-width="2"/>`; }
+    s += `<line class="tick" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="2"/>`; }
   const gradi = 180 * (Math.min(Math.max(val, min), max) - min) / (max - min);
-  s += `<g class="needle" id="${id}" style="transform:rotate(0deg)"><line x1="${cx}" y1="${cy}" x2="${cx - 92}" y2="${cy}" stroke="#14202b" stroke-width="5" stroke-linecap="round"/></g>
-        <circle cx="${cx}" cy="${cy}" r="11" fill="#14202b"/><circle cx="${cx}" cy="${cy}" r="4" fill="#d4a24c"/>
-        <text x="${cx}" y="${cy + 38}" text-anchor="middle" font-size="26" font-weight="700" fill="#1d2329">${centro}</text>
-        <text x="${cx}" y="${cy + 54}" text-anchor="middle" font-size="12" fill="#6b7380">${sotto}</text></svg>`;
+  s += `<g class="needle" id="${id}" style="transform:rotate(0deg)"><line x1="${cx}" y1="${cy}" x2="${cx - 92}" y2="${cy}" style="stroke:var(--needle)" stroke-width="5" stroke-linecap="round"/></g>
+        <circle class="hub" cx="${cx}" cy="${cy}" r="12"/><circle cx="${cx}" cy="${cy}" r="4.5" fill="#d4a24c"/>
+        <text x="${cx}" y="${cy + 42}" text-anchor="middle" class="gc">${centro}</text>
+        <text x="${cx}" y="${cy + 59}" text-anchor="middle" class="ax" font-size="12">${sotto}</text></svg>`;
   setTimeout(() => { const n = document.getElementById(id); if (n) n.style.transform = `rotate(${gradi}deg)`; }, 80);
   return s;
 }
 const OK = "#2e9e62", WARN = "#e0a526", KO = "#d1453b";
+
+
+/* ---------- tema, icone, mini-grafici, numeri animati ---------- */
+const ICO = {euro: "M17 7a6 6 0 100 10M5 10h8M5 14h8", users: "M16 19v-1a4 4 0 00-8 0v1M12 11a3 3 0 100-6 3 3 0 000 6M20 19v-1a3 3 0 00-3-3M17 5a3 3 0 010 6",
+  ticket: "M4 7h16v3a2 2 0 000 4v3H4v-3a2 2 0 000-4z", clock: "M12 21a9 9 0 100-18 9 9 0 000 18M12 7v5l3 2", team: "M3 20v-2a4 4 0 014-4h4a4 4 0 014 4v2M9 10a3 3 0 100-6 3 3 0 000 6M21 20v-1a3 3 0 00-2-3",
+  pizza: "M12 3l9 17H3zM10 12h.01M14 15h.01M11 17h.01", sun: "M12 17a5 5 0 100-10 5 5 0 000 10M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4",
+  moon: "M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"};
+const ico = (k, w = 15) => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${ICO[k]}"/></svg>`;
+function spark(v, col = "#d4a24c") {
+  const mx = Math.max(...v), mn = Math.min(...v), X = i => i * 70 / (v.length - 1), Y = x => 24 - 22 * (x - mn) / ((mx - mn) || 1);
+  const pts = v.map((x, i) => `${X(i)},${Y(x)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 70 26"><polyline points="0,26 ${pts} 70,26" fill="${col}22" stroke="none"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/></svg>`;
+}
+function cambiaTema(t) {
+  t = t || (document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem("galleon-tema", t); } catch (e) {}
+  $("#tema").innerHTML = ico(t === "dark" ? "sun" : "moon", 19);
+}
+function animaNumeri() {
+  document.querySelectorAll("[data-n]").forEach(el => {
+    const fine = +el.dataset.n, f = {eur: x => eur(x, 0), eur2: x => eur(x, 2), num, pct}[el.dataset.f], t0 = performance.now();
+    const step = t => { const k = Math.min(1, (t - t0) / 900), e = 1 - Math.pow(1 - k, 3); el.textContent = f(fine * e); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
 
 /* ---------- grafico a barre ---------- */
 function barre(valori, etichette, rif, fmt, colori, h = 230) {
   const w = 760, L = 58, top = Math.max(...valori, rif || 0) * 1.12 || 1, bot = Math.min(0, ...valori);
   const sx = (w - L - 10) / valori.length, Y = v => 14 + (h - 44) * (top - v) / (top - bot);
   let s = `<svg class="chart" viewBox="0 0 ${w} ${h}">`;
-  [0.5, 1].forEach(f => { const v = (top / 1.12) * f; s += `<line x1="${L}" x2="${w - 10}" y1="${Y(v)}" y2="${Y(v)}" stroke="#f0ebe2"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" class="ax">${fmt(v)}</text>`; });
+  [0.5, 1].forEach(f => { const v = (top / 1.12) * f; s += `<line class="grid-l" x1="${L}" x2="${w - 10}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" class="ax">${fmt(v)}</text>`; });
   valori.forEach((v, i) => {
     const x = L + i * sx, y0 = Y(0), y1 = Y(v);
     s += `<rect class="bar" data-t="${etichette[i]}: ${fmt(v)}" x="${x + sx * .14}" y="${Math.min(y0, y1)}" width="${sx * .72}" height="${Math.max(1, Math.abs(y0 - y1))}" rx="${Math.min(6, sx * .2)}" fill="${colori[i]}"/>`;
     if (valori.length <= 12 || i % Math.ceil(valori.length / 8) === 0) s += `<text x="${x + sx / 2}" y="${h - 10}" text-anchor="middle" class="ax">${etichette[i]}</text>`;
   });
-  if (rif) s += `<line x1="${L}" x2="${w - 10}" y1="${Y(rif)}" y2="${Y(rif)}" stroke="${KO}" stroke-width="2" stroke-dasharray="6 5"/><text x="${w - 12}" y="${Y(rif) - 7}" text-anchor="end" font-size="12" font-weight="600" fill="${KO}" stroke="#fff" stroke-width="4" paint-order="stroke">pareggio ${fmt(rif)}</text>`;
+  if (rif) s += `<line x1="${L}" x2="${w - 10}" y1="${Y(rif)}" y2="${Y(rif)}" stroke="${KO}" stroke-width="2" stroke-dasharray="6 5"/><text x="${w - 12}" y="${Y(rif) - 7}" text-anchor="end" font-size="12" font-weight="600" fill="${KO}" style="stroke:var(--card)" stroke-width="4" paint-order="stroke">pareggio ${fmt(rif)}</text>`;
   return s + "</svg>";
 }
 function linee(serie, etichette, soglia, h = 210) {
@@ -128,7 +176,7 @@ function linee(serie, etichette, soglia, h = 210) {
   if (soglia) s += `<line x1="${L}" x2="${X(n - 1)}" y1="${Y(soglia)}" y2="${Y(soglia)}" stroke="${KO}" stroke-dasharray="6 5" stroke-width="1.5"/><text x="${L - 6}" y="${Y(soglia) + 4}" text-anchor="end" class="ax">${pct(soglia)}</text>`;
   for (const sr of serie) {
     s += `<polyline points="${sr.v.map((v, i) => `${X(i)},${Y(v)}`).join(" ")}" fill="none" stroke="${sr.c}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
-    sr.v.forEach((v, i) => s += `<circle class="bar" data-t="${sr.n} sett. ${etichette[i]}: ${pct(v)}" cx="${X(i)}" cy="${Y(v)}" r="4.5" fill="#fff" stroke="${sr.c}" stroke-width="2.5"/>`);
+    sr.v.forEach((v, i) => s += `<circle class="bar" data-t="${sr.n} sett. ${etichette[i]}: ${pct(v)}" cx="${X(i)}" cy="${Y(v)}" r="4.5" class="pt" stroke="${sr.c}" stroke-width="2.5"/>`);
     s += `<text x="${X(n - 1) + 10}" y="${Y(sr.v[n - 1]) + 4}" font-size="12" font-weight="600" fill="${sr.c}">${sr.n} ${pct(sr.v[n - 1])}</text>`;
   }
   etichette.forEach((e, i) => { if (n <= 8 || i % 2 === 0) s += `<text x="${X(i)}" y="${h - 10}" text-anchor="middle" class="ax">${e}</text>`; });
@@ -144,7 +192,13 @@ function vistaRotta() {
   const stato = rp < 100 ? ["ko", "In perdita"] : rp < 120 ? ["warn", "Margine stretto"] : ["ok", "In rotta"];
   const fcMax = D.obiettivi.food_cost_max * 100, clMax = D.obiettivi.costo_lavoro_max * 100;
   const mese = D.mesi[D.mesi.length - 1];
-  let h = `<div class="grid g3">
+  const icH = {ok: ["#e3f4ea", OK, "M5 13l4 4L19 7"], warn: ["#fcf1d6", WARN, "M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"], ko: ["#fbe4e2", KO, "M12 9v4M12 17h.01M12 3a9 9 0 100 18 9 9 0 000-18z"]}[stato[0]];
+  const nomeMese = meseNome(mese.mese).split(" ")[0];
+  let h = `<div class="card hero"><div class="ic" style="background:${icH[0]}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${icH[1]}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${icH[2]}"/></svg></div>
+    <div style="flex:1;min-width:220px"><h2>${nomeMese[0].toUpperCase() + nomeMese.slice(1)}: ${stato[1].toLowerCase()}</h2>
+    <p>A questo ritmo chiudi il mese con un risultato di <b style="color:${b.risultato >= 0 ? OK : KO}">${eur(b.risultato)}</b>. Per stare in pari servono circa ${eur(b.pareggio_giorno, 0)} netti a serata.</p></div>
+    <span class="pill ${stato[0]}">${(n => n === 1 ? "1 avviso importante" : n + " avvisi importanti")(D.avvisi.filter(a => a.alto).length)}</span></div>
+  <div class="grid g3">
    <div class="card gauge-big"><h2>Rotta verso l'utile</h2><p class="sub">Dove arrivi a fine mese a questo ritmo</p>
      ${gauge(rp, 50, 200, [[50, 100, KO], [100, 120, WARN], [120, 200, OK]], Math.round(rp) + "%", "del punto di pareggio", "g1")}
      <span class="pill ${stato[0]}">${stato[1]}</span>
@@ -155,15 +209,21 @@ function vistaRotta() {
      ${gauge(b.costo_lavoro * 100, 10, 50, [[10, clMax - 3, OK], [clMax - 3, clMax, WARN], [clMax, 50, KO]], pct(b.costo_lavoro), "mese in corso", "g3")}</div>
   </div>`;
   const nomi = Object.keys(D.kpi), k = D.kpi[nomi[periodo]];
+  const somma = a => a.reduce((s, g) => s + g.ricavi, 0), Gi = D.giorni;
+  let delta = "";
+  if (periodo === 1 && Gi.length >= 14) { const d = somma(Gi.slice(-7)) / somma(Gi.slice(-14, -7)) - 1;
+    delta = `<div class="delta ${d >= 0 ? "su" : "giu"}">${d >= 0 ? "▲" : "▼"} ${pct(Math.abs(d))} sulla settimana prima</div>`; }
+  if (periodo === 0 && Gi.length >= 8) { const d = Gi[Gi.length - 1].ricavi / Gi[Gi.length - 8].ricavi - 1;
+    delta = `<div class="delta ${d >= 0 ? "su" : "giu"}">${d >= 0 ? "▲" : "▼"} ${pct(Math.abs(d))} sullo stesso giorno scorso</div>`; }
   h += `<div class="grid g2 sec"><div class="card"><h2>I numeri</h2><p class="sub">Scegli il periodo</p>
      <div class="seg">${nomi.map((n, i) => `<button class="${i === periodo ? "on" : ""}" onclick="periodo=${i};mostra()">${n.replace("Ultima serata", "Ieri")}</button>`).join("")}</div>
      <div class="kpis">
-      <div class="kpi"><span>Ricavi netti</span><b>${eur(k["Ricavi netti"])}</b></div>
-      <div class="kpi"><span>Coperti</span><b>${num(k["Coperti"])}</b></div>
-      <div class="kpi"><span>Scontrino medio a coperto</span><b>${eur(k["Scontrino medio/coperto (IVA incl.)"], 2)}</b></div>
-      <div class="kpi"><span>Ricavo per ora lavorata</span><b>${eur(k["Ricavo per ora lavorata"], 2)}</b></div>
-      <div class="kpi ${k["Costo lavoro %"] > D.obiettivi.costo_lavoro_max ? "ko" : "ok"}"><span>Costo lavoro</span><b>${pct(k["Costo lavoro %"])}</b></div>
-      <div class="kpi ${k["Food cost % teorico"] > D.obiettivi.food_cost_max ? "ko" : "ok"}"><span>Food cost</span><b>${pct(k["Food cost % teorico"])}</b></div>
+      <div class="kpi"><div class="h">${ico("euro")}Ricavi netti</div><b data-n="${k["Ricavi netti"]}" data-f="eur">${eur(k["Ricavi netti"])}</b>${delta}${spark(D.giorni.slice(-14).map(g => g.ricavi))}</div>
+      <div class="kpi"><div class="h">${ico("users")}Coperti</div><b data-n="${k["Coperti"]}" data-f="num">${num(k["Coperti"])}</b></div>
+      <div class="kpi"><div class="h">${ico("ticket")}Scontrino medio a coperto</div><b data-n="${k["Scontrino medio/coperto (IVA incl.)"]}" data-f="eur2">${eur(k["Scontrino medio/coperto (IVA incl.)"], 2)}</b></div>
+      <div class="kpi"><div class="h">${ico("clock")}Ricavo per ora lavorata</div><b data-n="${k["Ricavo per ora lavorata"]}" data-f="eur2">${eur(k["Ricavo per ora lavorata"], 2)}</b></div>
+      <div class="kpi ${k["Costo lavoro %"] > D.obiettivi.costo_lavoro_max ? "ko" : "ok"}"><div class="h">${ico("team")}Costo lavoro</div><b data-n="${k["Costo lavoro %"]}" data-f="pct">${pct(k["Costo lavoro %"])}</b></div>
+      <div class="kpi ${k["Food cost % teorico"] > D.obiettivi.food_cost_max ? "ko" : "ok"}"><div class="h">${ico("pizza")}Food cost</div><b data-n="${k["Food cost % teorico"]}" data-f="pct">${pct(k["Food cost % teorico"])}</b></div>
      </div></div>
    <div class="card"><h2>Cosa guardare oggi</h2><p class="sub">Avvisi calcolati automaticamente</p>
      <ul class="avvisi">${D.avvisi.length ? D.avvisi.map(a => `<li><span class="dot ${a.alto ? "ko" : ""}"></span>${a.testo}</li>`).join("") : "<li>Tutto sotto controllo.</li>"}</ul></div></div>`;
@@ -190,18 +250,18 @@ function vistaConto() {
       <div><div class="mut">Risultato gestionale</div><div class="big-n" style="color:${m.risultato >= 0 ? OK : KO}">${eur(m.risultato)}</div></div>
       <div><div class="mut">Ricavi di pareggio</div><div class="big-n">${eur(m.pareggio)}</div></div>
       <div><div class="mut">Margine sul pareggio</div><div class="big-n">${pct(m.ricavi / m.pareggio - 1)}</div></div></div></div>
-   <div class="card"><h2>Indicatori</h2><p class="sub">Inventario: ${m.rimanenze}</p><table>
+   <div class="card"><h2>Indicatori</h2><p class="sub">Inventario: ${m.rimanenze}</p><div class="tw"><table>
     <tr><th>Voce</th><th>Valore</th><th>Obiettivo</th></tr>
     <tr><td>Food cost effettivo</td><td>${pct(m.food_eff)}</td><td>≤ ${pct(D.obiettivi.food_cost_max)}</td></tr>
     <tr><td>Food cost teorico (ricette)</td><td>${pct(m.food_teo)}</td><td></td></tr>
     <tr><td>Costo del lavoro</td><td>${pct(m.lavoro)}</td><td>≤ ${pct(D.obiettivi.costo_lavoro_max)}</td></tr>
     <tr><td>Prime cost (merci + lavoro)</td><td>${pct(m.prime)}</td><td>≤ ${pct(D.obiettivi.prime_cost_max)}</td></tr>
     <tr><td>Coperti</td><td>${num(m.coperti)}</td><td></td></tr>
-    <tr><td>di cui ricavi non scontrinati</td><td>${eur(m.non_scontrinato)}</td><td></td></tr></table></div></div>
-  <div class="card sec"><h2>Conto economico mese per mese</h2><table>
+    <tr><td>di cui ricavi non scontrinati</td><td>${eur(m.non_scontrinato)}</td><td></td></tr></table></div></div></div>
+  <div class="card sec"><h2>Conto economico mese per mese</h2><div class="tw"><table>
     <tr><th>Voce</th>${M.map(x => `<th>${meseNome(x.mese).split(" ")[0]}</th>`).join("")}</tr>
     ${[["Ricavi netti", "ricavi", 1], ["Costo merci", "costo_merci"], ["Personale", "personale"], ["Altri costi", "altri"], ["Costi fissi", "fissi"], ["Risultato", "risultato", 1]]
-      .map(([l, k, b]) => `<tr class="${b ? "big" : ""}"><td>${l}</td>${M.map(x => `<td style="${k === "risultato" ? "color:" + (x[k] >= 0 ? OK : KO) : ""}">${eur(x[k])}</td>`).join("")}</tr>`).join("")}</table>
+      .map(([l, k, b]) => `<tr class="${b ? "big" : ""}"><td>${l}</td>${M.map(x => `<td style="${k === "risultato" ? "color:" + (x[k] >= 0 ? OK : KO) : ""}">${eur(x[k])}</td>`).join("")}</tr>`).join("")}</table></div>
     ${barre(M.map(x => x.risultato), M.map(x => meseNome(x.mese).split(" ")[0]), null, x => eur(x, 0), M.map(x => x.risultato >= 0 ? OK : KO), 190)}</div>`;
   return h;
 }
@@ -218,19 +278,25 @@ function vistaMenu() {
   const X = v => P + (w - P - 14) * v / xM, Y = v => 14 + (h - P - 14) * (yM - v) / (yM - yMin);
   const col = {Star: OK, Plowhorse: "#3b7dd8", Puzzle: WARN, Dog: KO};
   let s = `<svg class="chart" viewBox="0 0 ${w} ${h}">
-    <rect x="${X(1)}" y="${Y(yM)}" width="${X(xM) - X(1)}" height="${Y(1) - Y(yM)}" fill="#e3f4ea" opacity=".6"/>
-    <rect x="${P}" y="${Y(yM)}" width="${X(1) - P}" height="${Y(1) - Y(yM)}" fill="#fcf1d6" opacity=".6"/>
-    <rect x="${X(1)}" y="${Y(1)}" width="${X(xM) - X(1)}" height="${Y(yMin) - Y(1)}" fill="#e3edfb" opacity=".6"/>
-    <rect x="${P}" y="${Y(1)}" width="${X(1) - P}" height="${Y(yMin) - Y(1)}" fill="#fbe4e2" opacity=".6"/>
+    <rect x="${X(1)}" y="${Y(yM)}" width="${X(xM) - X(1)}" height="${Y(1) - Y(yM)}" fill="#e3f4ea" class="quad"/>
+    <rect x="${P}" y="${Y(yM)}" width="${X(1) - P}" height="${Y(1) - Y(yM)}" fill="#fcf1d6" class="quad"/>
+    <rect x="${X(1)}" y="${Y(1)}" width="${X(xM) - X(1)}" height="${Y(yMin) - Y(1)}" fill="#e3edfb" class="quad"/>
+    <rect x="${P}" y="${Y(1)}" width="${X(1) - P}" height="${Y(yMin) - Y(1)}" fill="#fbe4e2" class="quad"/>
     <text x="${X(xM) - 8}" y="${Y(yM) + 18}" text-anchor="end" font-weight="700" font-size="13" fill="#1d6e43">STAR</text>
     <text x="${P + 8}" y="${Y(yM) + 18}" font-weight="700" font-size="13" fill="#8a5f07">PUZZLE</text>
     <text x="${X(xM) - 8}" y="${Y(yMin) - 8}" text-anchor="end" font-weight="700" font-size="13" fill="#24508f">PLOWHORSE</text>
     <text x="${P + 8}" y="${Y(yMin) - 8}" font-weight="700" font-size="13" fill="#9b2a22">DOG</text>
     <text x="${(w + P) / 2}" y="${h - 8}" text-anchor="middle" class="ax">popolarità →</text>
     <text x="14" y="${(h - P) / 2}" class="ax" transform="rotate(-90 14 ${(h - P) / 2})" text-anchor="middle">margine →</text>`;
+  const posti = [];
+  it.forEach((x, i) => { const rr = 8 + Math.sqrt(x.margine_tot) / 8, cx = X(xs[i]), cy = Y(ys[i]);
+    const cerchi = it.map((z, j) => [X(xs[j]), Y(ys[j]), 8 + Math.sqrt(z.margine_tot) / 8]).filter((_, j) => j !== i);
+    const libero = y => !posti.some(([px, py]) => Math.abs(px - cx) < 90 && Math.abs(py - y) < 18) &&
+      !cerchi.some(([qx, qy, qr]) => Math.abs(qx - cx) < 45 + qr && y > qy - qr - 4 && y - 12 < qy + qr);
+    const ly = [cy - rr - 8, cy + rr + 16, cy - rr - 24, cy + rr + 32].find(libero) ?? cy - rr - 8; posti.push([cx, ly]); x._ly = ly; });
   it.forEach((x, i) => { s += `<g class="bar" data-t="${x.nome}: ${num(x.venduti)} venduti, margine ${eur(x.margine, 2)}">
-      <circle cx="${X(xs[i])}" cy="${Y(ys[i])}" r="${8 + Math.sqrt(x.margine_tot) / 8}" fill="${col[x.classe]}" opacity=".85" stroke="#fff" stroke-width="2"/>
-      <text x="${X(xs[i])}" y="${i % 2 ? Y(ys[i]) + 24 + Math.sqrt(x.margine_tot) / 8 : Y(ys[i]) - 14 - Math.sqrt(x.margine_tot) / 8}" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke" font-size="12" font-weight="600" fill="#1d2329">${x.nome}</text></g>`; });
+      <circle cx="${X(xs[i])}" cy="${Y(ys[i])}" r="${8 + Math.sqrt(x.margine_tot) / 8}" fill="${col[x.classe]}" opacity=".85" style="stroke:var(--card)" stroke-width="2"/>
+      <text x="${X(xs[i])}" y="${x._ly}" text-anchor="middle" class="lbl">${x.nome}</text></g>`; });
   s += "</svg>";
   return `<div class="chips">${gruppi.map(g => `<button class="${g === gruppo ? "on" : ""}" onclick="gruppo='${g}';mostra()">${g}</button>`).join("")}</div>
    <div class="grid g2"><div class="card"><h2>Matrice del menu · ${gruppo}</h2><p class="sub">Ultimi 30 giorni, prezzi e costi aggiornati · cerchio più grande = più margine totale</p>${s}</div>
@@ -276,8 +342,11 @@ function mostra() {
   $("#nav").innerHTML = VISTE.map(([id, n, , ic]) => `<button class="${id === vista ? "on" : ""}" onclick="vista='${id}';location.hash='${id}';mostra();scrollTo(0,0)">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${ic}"/></svg>${n}</button>`).join("");
   const v = VISTE.find(x => x[0] === vista) || VISTE[0];
-  $("#main").innerHTML = v[2]() + `<footer>The Galleon · Pub &amp; Pizzeria · aggiornato il ${D.generato}</footer>`;
+  $("#main").innerHTML = v[2]() + `<footer>⚓ The Galleon · Pub &amp; Pizzeria · Marsciano · aggiornato il ${D.generato}</footer>`;
+  animaNumeri();
 }
+let temaSalvato = null; try { temaSalvato = localStorage.getItem("galleon-tema"); } catch (e) {}
+cambiaTema(temaSalvato || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
 $("#sottotitolo").textContent = `Dati fino a ${gg(D.ultimo_giorno)} · aggiornato il ${D.generato}`;
 window.addEventListener("hashchange", () => { vista = location.hash.slice(1) || "rotta"; mostra(); });
 mostra();
