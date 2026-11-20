@@ -153,16 +153,45 @@ Panna cotta|5|panna_cotta
 Tartufo bianco o nero|5|tartufo_gelato
 Tiramisù|5.5|tiramisu
 Tortino al cioccolato|5.5|tortino_cioccolato
-Pizza dolce|7|impasto,nutella`}
+Pizza dolce|7|impasto,nutella`},
+"Aperitivi": {base: "", p: `Aperol Spritz alla spina|5|spina_aperol_spritz
+Prosecco al bicchiere|3|prosecco:125`},
+"Bibite": {base: "", p: `Acqua piccola N/F|1.5|acqua_piccola
+Acqua 1 litro N/F|2.5|acqua_1l
+Coca Cola 0,33|3|coca_033
+Fanta 0,33|3|fanta_033
+Sprite 0,33|3|sprite_033
+The limone/pesca|3|the_bottiglia`},
+"Birre alla spina": {base: "", p: `Carlsberg 0,3|3.5|spina_carlsberg:300
+Carlsberg 0,4|5|spina_carlsberg:400
+Grimbergen Double 0,25|4|spina_grimbergen:250
+Grimbergen Double 0,5|6|spina_grimbergen:500
+Special Brew 0,3|4.5|spina_special_brew:300
+Special Brew 0,4|5.5|spina_special_brew:400
+Tucher Weizen 0,33|4.5|spina_tucher:330
+Tucher Weizen 0,5|6|spina_tucher:500`},
+"Birre in bottiglia": {base: "", p: `Engel Radler|5|engel_radler
+Birra gluten free 33 cl|4|birra_gluten_free
+Tennent's Super 33 cl|4|tennents_super`},
+"Vini in bottiglia": {base: "", p: `Refosco dal Peduncolo Rosso 0,375|7|refosco_0375
+Refosco dal Peduncolo Rosso 0,75|15|refosco_075
+Ribolla Gialla 0,375|7|ribolla_0375
+Ribolla Gialla 0,75|15|ribolla_075
+Sauvignon 0,375|7|sauvignon_0375
+Sauvignon 0,75|15|sauvignon_075
+Traminer Aromatico 0,375|7|traminer_0375
+Traminer Aromatico 0,75|15|traminer_075`},
+"Caffè": {base: "", p: `Caffè espresso|1.5|caffe:7`}
 };
 // ingredienti contati a pezzi (quantità in ricetta = numero di pezzi)
-const PZ = /^(impasto|impasto_pala|impasto_torta|piadina|pane_.*|uovo|torta_testo|carne_.*|hamburger_pollo_150|cotoletta_pollo|petto_pollo|burrata|wurstel|bufala|jalapeno_.*|fiori_zucca|alette_pollo|chele_granchio|crocchette|roll_piccanti|polpette_cheddar|corn_hog|olive_ascolane|mozzarelline|suppli|cheesecake|semifreddo_.*|crema_catalana|panna_cotta|tartufo_gelato|tiramisu|tortino_cioccolato)$/;
-const CLASSE_A = /^(mozzarella|impasto|impasto_pala|pomodoro|carne_.*|hamburger_pollo_150|salsiccia|prosciutto_crudo|bufala|stracciatella|burrata|patatine)$/;
-const CLASSE_B = /^(bacon|cheddar|salame_piccante|speck|prosciutto_cotto|bresaola|mortadella.*|lardo|salmone|gamberetti|sella_san_venanzo|gorgonzola|salsa_4_formaggi|provola|funghi|porcini|verdure_grigliate|wurstel|patatine_chips|patate_dippers|mozzarelline|olive_ascolane|crocchette|alette_pollo|chele_granchio|jalapeno_.*|olio|cotoletta_pollo|pane_burger|impasto_torta|piadina|torta_testo|cheesecake|tiramisu|semifreddo_.*)$/;
+const PZ = /^(impasto|impasto_pala|impasto_torta|piadina|pane_.*|uovo|torta_testo|carne_.*|hamburger_pollo_150|cotoletta_pollo|petto_pollo|burrata|wurstel|bufala|jalapeno_.*|fiori_zucca|alette_pollo|chele_granchio|crocchette|roll_piccanti|polpette_cheddar|corn_hog|olive_ascolane|mozzarelline|suppli|cheesecake|semifreddo_.*|crema_catalana|panna_cotta|tartufo_gelato|tiramisu|tortino_cioccolato|acqua_.*|coca_033|fanta_033|sprite_033|the_bottiglia|engel_radler|birra_gluten_free|tennents_super|refosco_.*|ribolla_.*|sauvignon_.*|traminer_.*)$/;
+const LITRI = /^(spina_.*|prosecco)$/;
+const CLASSE_A = /^(spina_.*|mozzarella|impasto|impasto_pala|pomodoro|carne_.*|hamburger_pollo_150|salsiccia|prosciutto_crudo|bufala|stracciatella|burrata|patatine)$/;
+const CLASSE_B = /^(bacon|cheddar|salame_piccante|speck|prosciutto_cotto|bresaola|mortadella.*|lardo|salmone|gamberetti|sella_san_venanzo|gorgonzola|salsa_4_formaggi|provola|funghi|porcini|verdure_grigliate|wurstel|patatine_chips|patate_dippers|mozzarelline|olive_ascolane|crocchette|alette_pollo|chele_granchio|jalapeno_.*|olio|cotoletta_pollo|pane_burger|impasto_torta|piadina|torta_testo|cheesecake|tiramisu|semifreddo_.*|prosecco|acqua_.*|coca_033|fanta_033|sprite_033|the_bottiglia|engel_radler|birra_gluten_free|tennents_super|refosco_.*|ribolla_.*|sauvignon_.*|traminer_.*|caffe)$/;
 
 const KEY = "galleon_ricettario";
 const salva = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
-const nuovoIng = n => ({u: PZ.test(n) ? "pz" : "kg", classe: CLASSE_A.test(n) ? "A" : CLASSE_B.test(n) ? "B" : "C", costo: n === "impasto" ? 0.8 : null});
+const nuovoIng = n => ({u: PZ.test(n) ? "pz" : LITRI.test(n) ? "l" : "kg", classe: CLASSE_A.test(n) ? "A" : CLASSE_B.test(n) ? "B" : "C", costo: n === "impasto" ? 0.8 : null});
 const slug = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 
 function iniziale() {
@@ -191,6 +220,11 @@ function iniziale() {
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 if (!S || !S.cats) S = iniziale();
+else { // aggiunge le categorie nuove (es. bevande) senza toccare le modifiche già fatte
+  const base = iniziale();
+  base.cats.forEach(c => { if (!S.cats.some(x => x.nome === c.nome)) { S.cats.push(c);
+    c.prodotti.forEach(p => p.ing.forEach(r => { if (!S.ingr[r.n]) S.ingr[r.n] = base.ingr[r.n]; })); } });
+}
 
 /* ===== utilità ===== */
 const $ = id => document.getElementById(id);
@@ -217,7 +251,7 @@ function vistaRicettario() {
   return `<div class="card"><div class="top"><input id="cerca" placeholder="🔍 Cerca prodotto o ingrediente" value="${esc(cerca)}" oninput="cerca=this.value;mostra(true)" style="flex:1;min-width:200px">
      <button class="b" onclick="aggiungiCat()">+ Categoria</button></div>
     <div class="chips">${S.cats.map((cc, i) => `<button class="${i === catSel && !cerca ? "on" : ""}" onclick="catSel=${i};cerca='';mostra()">${esc(cc.nome)} <small>${cc.prodotti.length}</small></button>`).join("")}</div>
-    <p class="mut">Grammature in <b>grammi</b> (o pezzi). Partono da una stima sul menu: solo mozzarella 105 g e pomodoro 60 g sono vostre. Le righe senza quantità vanno completate col ricettario scritto. Il food cost si calcola quando inserite i costi in "Ingredienti".</p></div>
+    <p class="mut">Grammature in <b>grammi</b>, <b>ml</b> per spina e vino al bicchiere, oppure pezzi (bottiglie, lattine). Partono da una stima sul menu: solo mozzarella 105 g e pomodoro 60 g sono vostre. Le righe senza quantità vanno completate col ricettario scritto. Il food cost si calcola quando inserite i costi in "Ingredienti".</p></div>
   ${prodotti.map(({p, ci, pi}) => schedaProdotto(p, ci, pi)).join("") || `<div class="card mut">Nessun prodotto.</div>`}
   ${cerca ? "" : `<div class="top"><button class="b p" onclick="aggiungiProd()">+ Prodotto in ${esc(c.nome)}</button>
     <button class="b" onclick="rinominaCat()">Rinomina categoria</button><button class="b" onclick="eliminaCat()">Elimina categoria</button></div>`}
