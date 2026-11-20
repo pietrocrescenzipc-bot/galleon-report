@@ -579,12 +579,14 @@ function vistaCE() {
   const acqFood = sommaCol("acquisti", fa?.e, r => !fa.c || /food|cibo|aliment|merc/.test(cat(r)) || cat(r) === "");
   const acqBev = sommaCol("acquisti", fa?.e, r => fa.c && /bev|bibit|birr|vin/.test(cat(r)));
   const acqAltro = sommaCol("acquisti", fa?.e) - acqFood - acqBev;
-  const acqFat = F.acquisti ? 0 : FAT.righe.reduce((a, r) => a + r.eur, 0);
+  const NOFOOD = /detergent|sgrassat|ipoclorit|sacchi|guant|tovagliol|asciugaman|scatola|vassoio|carta|rotolo|mop\b|brill|soppal|sacchett|busta|cauzion|bicchier|piatti|posate|cannucc|pellicol|allumin/i;
+  const acqFat = F.acquisti ? 0 : FAT.righe.filter(r => !NOFOOD.test(r.desc)).reduce((a, r) => a + r.eur, 0);
+  const nonFood = F.acquisti ? 0 : FAT.righe.filter(r => NOFOOD.test(r.desc)).reduce((a, r) => a + r.eur, 0);
   const r0 = valoreConta("inizio"), r1 = valoreConta("fine");
   const merci = acqFood + acqBev + acqFat + (F.inizio && F.fine ? r0.v - r1.v : 0);
   let pers = 0;
   if (fp) pers = fp.e ? sommaCol("personale", fp.e) : fp.righe.reduce((a, r) => a + (num(r[fp.q]) || 0) * (num(r[fp.h]) || 0), 0);
-  const altri = sommaCol("costi", F.costi?.e) + acqAltro;
+  const altri = sommaCol("costi", F.costi?.e) + acqAltro + nonFood;
   const margine = ricavi - merci, ris = margine - pers - altri;
   const pc = x => ricavi ? IT(x / ricavi * 100, 1) + "%" : "–";
   const mc = ricavi ? margine / ricavi : 0, pareggio = mc > 0 ? (pers + altri) / mc : null;
@@ -600,7 +602,7 @@ function vistaCE() {
     ${acqFat ? riga("Acquisti da fatture XML", acqFat) : riga("Acquisti food", acqFood)}${acqBev ? riga("Acquisti bevande", acqBev) : ""}
     ${F.inizio && F.fine ? riga("Variazione rimanenze (iniziale − finale)", r0.v - r1.v) : ""}
     ${riga("COSTO MERCI", merci, true)}${riga("MARGINE", margine, true)}
-    ${riga("Costo personale", pers)}${riga("Altri costi" + (acqAltro ? " (incl. acquisti non food)" : ""), altri)}
+    ${riga("Costo personale", pers)}${riga("Altri costi" + (acqAltro || nonFood ? " (incl. imballaggi e detersivi)" : ""), altri)}
     ${riga("RISULTATO", ris, true, ris >= 0 ? "var(--ok)" : "var(--ko)")}</table>
     <div class="grid" style="margin-top:10px">
      <div><b>Food cost</b><br><span style="font-size:22px;color:${merci / ricavi > 0.3 ? "var(--ko)" : "var(--ok)"}">${pc(merci)}</span><br><span class="mut">obiettivo max 30%</span></div>
