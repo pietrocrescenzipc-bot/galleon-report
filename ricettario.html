@@ -439,7 +439,7 @@ function fattore(desc, um, n) {
   if (u === "kg") { if (um === "KG") return 1; let m = d.match(/KG\.?\s*(\d+(\.\d+)?)/) || d.match(/(\d+(\.\d+)?)\s*KG/); if (m) return +m[1];
     m = d.match(/GR?\.?\s*(\d+)/) || d.match(/(\d+)\s*GR?\b/); if (m) return +m[1] / 1000; return 1; }
   if (u === "l") { if (/^(L|LT|LITRI)$/.test(um)) return 1; let m = d.match(/(\d+)\s*ML/); if (m) return +m[1] / 1000; m = d.match(/(\d+(\.\d+)?)\s*(LT|L)\b/); if (m) return +m[1]; return 1; }
-  const conf = d.match(/\d\s*X\s*(\d{1,3})\b/) || d.match(/\bX\s*(\d{1,3})\b/); // confezione da N pezzi (es. 33X24, 100x12)
+  const conf = d.match(/(\d{1,3})\s*(?:BT|PZ|BOTT)\b/) || d.match(/\d\s*X\s*(\d{1,3})\b/) || d.match(/\bX\s*(\d{1,3})\b/); // confezione da N pezzi (es. 33X24, 100x12)
   if (u === "pz" && !/^(carne_|hamburger_|wurstel_)/.test(n) && conf && um !== "KG") return +conf[1];
   const pz = d.match(/(?:^|[^.\d])(\d{2,3})\s*G\b/); // peso del singolo pezzo scritto in fattura (es. HAMBURGER 200G)
   if (u === "pz" && um === "KG" && pz) return Math.round(1000 / +pz[1] * 1000) / 1000;
