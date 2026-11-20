@@ -434,7 +434,7 @@ const INDOVINA = [[/special.?brew/, "spina_special_brew"], [/grimbergen/, "spina
   [/coscia.*stag|prosc.*crudo|crudo/, "prosciutto_crudo"], [/pancetta/, "pancetta"], [/capocollo|salame toscano|lonza/, "affettati_misti"],
   [/polpa|pelat|passata|pomodoro.*(latta|kg)/, "pomodoro"], [/pachino|ciliegin/, "pachino"], [/salsicc/, "salsiccia"], [/cotto/, "prosciutto_cotto"], [/speck/, "speck"],
   [/bresaola/, "bresaola"], [/salame|spianata/, "salame_piccante"], [/mortadella/, "mortadella"], [/bacon/, "bacon"], [/wurstel/, "wurstel_90"], [/funghi|champignon/, "funghi"],
-  [/patat.*(stick|fritt|surgel|julienne)|french.?fries/, "patatine"], [/cipolla rossa/, "cipolla_rossa"], [/patate (nuove|fresche|novelle|gialle|rosse)|^patate\b/, "patate"], [/rucola/, "rucola"], [/olio.*(extra|evo)/, "olio"]];
+  [/patat.*(stick|fritt|surgel|julienne)|french.?fries/, "patatine"], [/cipolla rossa/, "cipolla_rossa"], [/patate (nuove|fresche|novelle|gialle|rosse)|^patate\b/, "patate"], [/rucola/, "rucola"], [/zucchin/, "zucchine"], [/melanzan/, "melanzane"], [/lattuga|insalata/, "lattuga"], [/sottilett/, "sottiletta"], [/emmental/, "emmental"], [/aperol/, "spina_aperol_spritz"], [/olio.*(extra|evo)/, "olio"]];
 function indovina(desc) {
   const d = desc.toLowerCase(); for (const [rx, n] of INDOVINA) if (rx.test(d) && (n === "" || S.ingr[n])) return n; return "";
 }
