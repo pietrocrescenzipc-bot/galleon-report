@@ -425,13 +425,17 @@ async function caricaFatture(files) {
   }
   mostra();
 }
-const INDOVINA = [[/special.?brew/, "spina_special_brew"], [/grimbergen/, "spina_grimbergen"], [/tucher/, "spina_tucher"], [/carlsberg.*(pils|fust|\bfs\b|modular)/, "spina_carlsberg"],
+const INDOVINA = [[/dippers/, "patate_dippers"], [/chips/, "patatine_chips"], [/patate.*(9x9|regular|stick|fritt|surgel)|^patatine/, "patatine"],
+  [/4 formaggi/, "salsa_4_formaggi"], [/tartufat/, "salsa_tartufata"], [/porcini/, "porcini"], [/jalapen.*ross/, "jalapeno_rossi"], [/jalapen/, "jalapeno_cheddar"],
+  [/chele/, "chele_granchio"], [/mozzarelline/, "mozzarelline"], [/ascolane/, "olive_ascolane"], [/crocchette/, "crocchette"], [/anelli/, "anelli_cipolla"],
+  [/fiori zucc/, "fiori_zucca"], [/peperoni grigl/, "peperoni"], [/acciughe|alici/, "alici"], [/crema di zucca/, "crema_zucca"], [/pomodori secchi/, "pomodori_secchi"],
+  [/nutella/, "nutella"], [/granella.*pistacch|pistacchi granella/, "granella_pistacchio"], [/noci/, "noci"], [/farina/, "farina"], [/semola/, "semola"],[/special.?brew/, "spina_special_brew"], [/grimbergen/, "spina_grimbergen"], [/tucher/, "spina_tucher"], [/carlsberg.*(pils|fust|\bfs\b|modular)/, "spina_carlsberg"],
   [/aperol.*(fust|spina|keg)/, "spina_aperol_spritz"], [/prosecco/, "prosecco"], [/coca.?cola(?!.*zero).*33|coca.*33/, "coca_033"], [/fanta.*33/, "fanta_033"], [/sprite.*33/, "sprite_033"],
   [/radler/, "engel_radler"], [/esta.?the|\bthe\b.*(pesca|limone)/, "the_bottiglia"], [/tennent/, "tennents_super"], [/gluten/, "birra_gluten_free"], [/(acqua|tullia|panna|s\.?pellegrino|nat|friz).*(100|1l|1 l|lt ?1)/, "acqua_1l"],
   [/(acqua|tullia).*(50|0[,.]5)/, "acqua_piccola"], [/cauzion/, ""],[/mozz.*(pizz|julienne|fior.?di.?latte|filone|cubo)|fior.?di.?latte/, "mozzarella"], [/bufala/, "bufala"], [/stracciatella/, "stracciatella"], [/burrata/, "burrata"],
   [/gorgonzola/, "gorgonzola"], [/provola/, "provola"], [/stracchino/, "stracchino"], [/scamorza/, "scamorza"], [/pecorino/, "pecorino"], [/grana|parmigian/, "grana"], [/emmental/, "emmental"], [/cheddar/, "cheddar"],
   [/macinat.*chianina|chianina/, "carne_chianina_220"], [/hamburger.*angus|black.?angus/, "carne_angus_220"], [/scottona/, "carne_scottona_220"],
-  [/fass/, "carne_fassona_200"], [/macinat/, "carne_manzo_150"], [/hamburger.*pollo/, "hamburger_pollo_150"], [/milanese|cotolett/, "cotoletta_pollo"], [/tacchino/, "tacchino"],
+  [/fass/, "carne_fassona_200"], [/macinato\b/, "carne_manzo_150"], [/hamburger.*pollo/, "hamburger_pollo_150"], [/milanese|cotolett/, "cotoletta_pollo"], [/tacchino/, "tacchino"],
   [/uova|uovo/, "uovo"], [/gamber/, "gamberetti"], [/alette/, "alette_pollo"], [/nduja/, "crema_nduja"], [/sella/, "sella_san_venanzo"], [/lardo/, "lardo"], [/mortadella.*pist|pist.*mortadella/, "mortadella_pistacchio"],
   [/coscia.*stag|prosc.*crudo|crudo/, "prosciutto_crudo"], [/pancetta/, "pancetta"], [/capocollo|salame toscano|lonza/, "affettati_misti"],
   [/polpa|pelat|passata|pomodoro.*(latta|kg)/, "pomodoro"], [/pachino|ciliegin/, "pachino"], [/salsicc/, "salsiccia"], [/cotto/, "prosciutto_cotto"], [/speck/, "speck"],
@@ -444,7 +448,7 @@ function fattore(desc, um, n) {
   const u = S.ingr[n]?.u, d = desc.toUpperCase().replace(/,/g, ".");
   if (!u) return 1;
   if (u === "kg") { if (um === "KG") return 1; let m = d.match(/KG\.?\s*(\d+(\.\d+)?)/) || d.match(/(\d+(\.\d+)?)\s*KG/); if (m) return +m[1];
-    m = d.match(/GR?\.?\s*(\d+)/) || d.match(/(\d+)\s*GR?\b/); if (m) return +m[1] / 1000; return 1; }
+    m = d.match(/GR?\.?\s*(\d+)/) || d.match(/(\d+)\s*GR?\b/); if (m) { const x = d.match(/GR?\.?\s*\d+\s*X\s*(\d{1,2})\b/); return +m[1] / 1000 * (x && um !== "KG" ? +x[1] : 1); } return 1; }
   if (u === "l") { if (/^(L|LT|LITRI)$/.test(um)) return 1; let m = d.match(/(\d+)\s*ML/); if (m) return +m[1] / 1000; m = d.match(/(\d+(\.\d+)?)\s*(LT|L)\b/); if (m) return +m[1]; return 1; }
   const conf = d.match(/(\d{1,3})\s*(?:BT|PZ|BOTT)\b/) || d.match(/\d\s*X\s*(\d{1,3})\b/) || d.match(/\bX\s*(\d{1,3})\b/); // confezione da N pezzi (es. 33X24, 100x12)
   if (u === "pz" && !/^(carne_|hamburger_|wurstel_)/.test(n) && conf && um !== "KG") return +conf[1];
