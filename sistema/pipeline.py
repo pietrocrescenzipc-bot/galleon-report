@@ -184,6 +184,8 @@ def estrai_xml(raw: bytes) -> bytes:
         return raw
     trova = lambda x: re.search(rb"(<\?xml.*?)?<([\w-]+:)?FatturaElettronica[\s>].*?</([\w-]+:)?FatturaElettronica>", x, re.S)
     try:
+        if b"\xef\xbf\xbd" in raw[:60]:
+            raise ValueError("file alterato: salto la lettura BER")
         if raw[:1] != b"\x30":  # p7m salvato in base64
             import base64
             raw = base64.b64decode(re.sub(rb"[^A-Za-z0-9+/=]", b"", raw))
@@ -206,7 +208,8 @@ def _t(el, percorso, default=""):
 
 def leggi_fattura(raw: bytes) -> pd.DataFrame:
     """Legge una fattura elettronica (FatturaPA, standard SDI) e restituisce una riga per DettaglioLinee."""
-    root = ET.fromstring(estrai_xml(raw))
+    xml = re.sub(rb"<([\w-]+:)?Attachment>.*?</([\w-]+:)?Attachment>", b"", estrai_xml(raw), flags=re.S)  # PDF allegati: non servono
+    root = ET.fromstring(xml)
     for el in root.iter():  # toglie i namespace (p:, ns2:...) per semplificare le ricerche
         el.tag = el.tag.split("}")[-1]
     ced = root.find(".//CedentePrestatore")

@@ -348,13 +348,14 @@ function vistaImporta() {
     <p class="mut">Carica le fatture scaricate da Fatture e Corrispettivi (anche lo ZIP del download massivo) o da Zucchetti. Per ogni prodotto scegli l'ingrediente e il <b>fattore</b>
     (quanti kg/l/pezzi dell'ingrediente ci sono in 1 unità della fattura, es. cubo da 3 kg → 3). La scelta viene ricordata per le prossime volte.</p>
     <input type="file" multiple accept=".xml,.p7m,.zip" onchange="caricaFatture(this.files)"> ${FAT.righe.length ? `<span class="mut">${FAT.file} file · ${FAT.righe.length} righe · ${eur(FAT.righe.reduce((a, r) => a + r.eur, 0))} imponibile</span>` : ""}
+    ${FAT.doppie ? `<p class="mut">${FAT.doppie} fatture caricate due volte: contate una volta sola.</p>` : ""}
     ${FAT.errori.length ? `<p class="warn">Non letti: ${FAT.errori.map(esc).join(", ")}</p>` : ""}
     ${tabellaFatture()}</div>
   ${risultato()}`;
 }
 
 /* ===== FATTURE ELETTRONICHE ===== */
-const FAT = {righe: [], file: 0, errori: []};
+const FAT = {righe: [], file: 0, errori: [], viste: new Set(), doppie: 0};
 S.mappa = S.mappa || {};
 function berOctets(b) { // concatena gli OCTET STRING di un .p7m (DER/BER, anche a blocchi)
   const out = []; let tot = 0;
@@ -378,12 +379,14 @@ function berOctets(b) { // concatena gli OCTET STRING di un .p7m (DER/BER, anche
 const latin = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return s; };
 const daLatin = s => Uint8Array.from(s, c => c.charCodeAt(0));
 const RX_FE = /(<\?xml[\s\S]*?)?<([\w-]+:)?FatturaElettronica[\s>][\s\S]*?<\/([\w-]+:)?FatturaElettronica>/;
-function estraiXml(u8) {
+const senzaAllegati = x => x.replace(/<([\w-]+:)?Attachment>[\s\S]*?<\/([\w-]+:)?Attachment>/g, "");
+function estraiXml(u8) { return senzaAllegati(estraiXml0(u8)); }
+function estraiXml0(u8) {
   let t = latin(u8.subarray(0, 300));
   if (t.trimStart().startsWith("<")) return new TextDecoder("utf-8").decode(u8);
   let bin = u8;
   if (u8[0] !== 0x30) { try { bin = daLatin(atob(latin(u8).replace(/[^A-Za-z0-9+/=]/g, ""))); } catch (e) {} }
-  try { const m = latin(berOctets(bin)).match(RX_FE); if (m) return new TextDecoder("utf-8").decode(daLatin(m[0])); } catch (e) {}
+  if (!latin(bin.subarray(0, 60)).includes("\xef\xbf\xbd")) try { const m = latin(berOctets(bin)).match(RX_FE); if (m) return new TextDecoder("utf-8").decode(daLatin(m[0])); } catch (e) {}
   const m = latin(bin).match(RX_FE); if (!m) throw new Error("fattura non trovata nel file");
   return new TextDecoder("utf-8").decode(daLatin(m[0].replace(/\x04(?:\x82[\s\S]{2}|\x81[\s\S]|\xef\xbf\xbd[\x00-\x7f]?\xef\xbf\xbd|[\x00-\x7f])/g, "")));
 }
@@ -394,6 +397,8 @@ function leggiFattura(xml, nomeFile) {
   const ced = uno(d, "CedentePrestatore"), forn = tx(ced, "Denominazione") || (tx(ced, "Nome") + " " + tx(ced, "Cognome")).trim();
   const out = [];
   tutti(d, "FatturaElettronicaBody").forEach(body => {
+    const numero = tx(uno(body, "DatiGeneraliDocumento"), "Numero");
+    const chiave = forn + "|" + numero; if (FAT.viste.has(chiave)) { FAT.doppie++; return; } FAT.viste.add(chiave);
     const data = tx(uno(body, "DatiGeneraliDocumento"), "Data"), tipo = tx(body, "TipoDocumento"), segno = tipo === "TD04" ? -1 : 1;
     tutti(body, "DettaglioLinee").forEach(l => {
       const eurv = +tx(l, "PrezzoTotale") * segno; if (!eurv) return;
@@ -403,7 +408,7 @@ function leggiFattura(xml, nomeFile) {
   return out;
 }
 async function caricaFatture(files) {
-  FAT.righe = []; FAT.file = 0; FAT.errori = [];
+  FAT.righe = []; FAT.file = 0; FAT.errori = []; FAT.viste = new Set(); FAT.doppie = 0;
   const elenco = [];
   for (const f of files) {
     const u8 = new Uint8Array(await f.arrayBuffer());
@@ -579,9 +584,9 @@ function vistaCE() {
   const acqFood = sommaCol("acquisti", fa?.e, r => !fa.c || /food|cibo|aliment|merc/.test(cat(r)) || cat(r) === "");
   const acqBev = sommaCol("acquisti", fa?.e, r => fa.c && /bev|bibit|birr|vin/.test(cat(r)));
   const acqAltro = sommaCol("acquisti", fa?.e) - acqFood - acqBev;
-  const NOFOOD = /detergent|sgrassat|ipoclorit|sacchi|guant|tovagliol|asciugaman|scatola|vassoio|carta|rotolo|mop\b|brill|soppal|sacchett|busta|cauzion|bicchier|piatti|posate|cannucc|pellicol|allumin/i;
-  const acqFat = F.acquisti ? 0 : FAT.righe.filter(r => !NOFOOD.test(r.desc)).reduce((a, r) => a + r.eur, 0);
-  const nonFood = F.acquisti ? 0 : FAT.righe.filter(r => NOFOOD.test(r.desc)).reduce((a, r) => a + r.eur, 0);
+  const NOFOOD = /\bkwh\b|energia|tutela|\bele\b|imposte|oneri|gas naturale|\bsmc\b|canone|telefon|internet|detergent|sgrassat|ipoclorit|sacchi|guant|tovagliol|asciugaman|scatola|vassoio|carta|rotolo|mop\b|brill|soppal|sacchett|busta|cauzion|bicchier|piatti|posate|cannucc|pellicol|allumin/i;
+  const acqFat = F.acquisti ? 0 : FAT.righe.filter(r => !(NOFOOD.test(r.desc) || r.um === "KWH" || r.um === "SMC")).reduce((a, r) => a + r.eur, 0);
+  const nonFood = F.acquisti ? 0 : FAT.righe.filter(r => NOFOOD.test(r.desc) || r.um === "KWH" || r.um === "SMC").reduce((a, r) => a + r.eur, 0);
   const r0 = valoreConta("inizio"), r1 = valoreConta("fine");
   const merci = acqFood + acqBev + acqFat + (F.inizio && F.fine ? r0.v - r1.v : 0);
   let pers = 0;
@@ -602,7 +607,7 @@ function vistaCE() {
     ${acqFat ? riga("Acquisti da fatture XML", acqFat) : riga("Acquisti food", acqFood)}${acqBev ? riga("Acquisti bevande", acqBev) : ""}
     ${F.inizio && F.fine ? riga("Variazione rimanenze (iniziale − finale)", r0.v - r1.v) : ""}
     ${riga("COSTO MERCI", merci, true)}${riga("MARGINE", margine, true)}
-    ${riga("Costo personale", pers)}${riga("Altri costi" + (acqAltro || nonFood ? " (incl. imballaggi e detersivi)" : ""), altri)}
+    ${riga("Costo personale", pers)}${riga("Altri costi" + (acqAltro || nonFood ? " (incl. utenze, imballaggi e detersivi)" : ""), altri)}
     ${riga("RISULTATO", ris, true, ris >= 0 ? "var(--ok)" : "var(--ko)")}</table>
     <div class="grid" style="margin-top:10px">
      <div><b>Food cost</b><br><span style="font-size:22px;color:${merci / ricavi > 0.3 ? "var(--ko)" : "var(--ok)"}">${pc(merci)}</span><br><span class="mut">obiettivo max 30%</span></div>
