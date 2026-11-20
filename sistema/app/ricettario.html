@@ -479,7 +479,8 @@ function fattore(desc, um, n) {
 function gruppiFatture() {
   S.mappa = S.mappa || {};
   const g = {};
-  FAT.righe.forEach(r => { const k = norm(r.desc); (g[k] = g[k] || {k, desc: r.desc, forn: r.forn, um: r.um, q: 0, eur: 0, data: ""}); if (r.data > g[k].data) g[k].data = r.data.split("-").reverse().join("/"); g[k].q += r.q; g[k].eur += r.eur; });
+  FAT.righe.forEach(r => { const k = norm(r.desc); const x = (g[k] = g[k] || {k, desc: r.desc, forn: r.forn, um: r.um, q: 0, eur: 0, d0: "9999", d1: ""}); if (r.data > x.d1) x.d1 = r.data; if (r.data < x.d0) x.d0 = r.data; x.q += r.q; x.eur += r.eur; });
+  Object.values(g).forEach(x => x.data = x.d1.split("-").reverse().join("/"));
   return Object.values(g).sort((a, b) => b.eur - a.eur).map(x => { const m = S.mappa[x.k] || {}; const n = m.n ?? indovina(x.desc);
     return {...x, n, f: m.f ?? (n ? fattore(x.desc, x.um, n) : 1)}; });
 }
@@ -493,7 +494,7 @@ function tabellaFatture() {
      <td class="n"><input style="width:65px;text-align:right" value="${x.n ? IT(x.f, 3) : ""}" onchange="mappa(${i},'f',this.value)"></td>
      <td class="n"><b>${c == null ? "–" : eur(c) + "/" + u}</b></td></tr>`; }).join("")}</table></div>
    <datalist id="ingrlist">${Object.keys(S.ingr).sort().map(n => `<option value="${n}">`).join("")}</datalist>
-   <p><button class="b p" onclick="applicaCosti()">Applica i costi agli ingredienti</button> <span class="mut">Se più righe vanno sullo stesso ingrediente, si fa la media pesata.</span></p>`;
+   <p><button class="b p" onclick="applicaCosti()">Applica i costi agli ingredienti</button> <span class="mut">Se lo stesso ingrediente arriva da più fornitori (es. grana da Cooperlat e da Gestimar), vale il fornitore da cui compriamo di più, al prezzo del suo ultimo mese di acquisto.</span></p>`;
 }
 function mappa(i, campo, v) {
   const x = window._gruppi[i], m = S.mappa[x.k] = S.mappa[x.k] || {n: x.n, f: x.f};
@@ -505,9 +506,20 @@ function acquistiDaFatture() {
   const o = {}; gruppiFatture().forEach(x => { if (x.n) o[x.n] = (o[x.n] || 0) + x.q * x.f; }); return o;
 }
 function applicaCosti() {
-  const agg = {}; gruppiFatture().forEach(x => { if (!x.n) return; S.mappa[x.k] = {n: x.n, f: x.f}; const a = agg[x.n] = agg[x.n] || {e: 0, q: 0, forn: "", data: ""}; a.e += x.eur; a.q += x.q * x.f; a.forn = x.forn.split(" ")[0]; a.data = x.data || a.data; });
-  const fatti = Object.entries(agg).filter(([, a]) => a.q > 0).map(([n, a]) => { S.ingr[n].costo = Math.round(a.e / a.q * 1000) / 1000; S.ingr[n].fonte = "fattura " + a.forn + " " + a.data; return `${n.replace(/_/g, " ")}: ${eur(S.ingr[n].costo)}/${S.ingr[n].u}`; });
-  salva(); alert(fatti.length ? "Costi aggiornati:\n" + fatti.join("\n") : "Nessun ingrediente collegato."); mostra();
+  // Storico per ingrediente e fornitore: si accumula tra un caricamento e l'altro (stesso prodotto e stesso periodo = sovrascritto, non contato due volte)
+  S.storico = S.storico || {};
+  gruppiFatture().forEach(x => { if (!x.n) return; S.mappa[x.k] = {n: x.n, f: x.f}; if (!(x.q * x.f > 0)) return;
+    const h = S.storico[x.n] = S.storico[x.n] || {}, f = h[x.forn] = h[x.forn] || {};
+    f[x.k + "|" + x.d0 + "|" + x.d1] = {q: x.q * x.f, e: x.eur, d: x.d1}; });
+  const fatti = [];
+  Object.keys(S.storico).filter(n => S.ingr[n]).forEach(n => {
+    // fornitore principale = quello da cui abbiamo comprato più quantità; il prezzo è quello del suo acquisto più recente
+    const forn = Object.entries(S.storico[n]).map(([nome, v]) => { const L = Object.values(v); const q = L.reduce((s, a) => s + a.q, 0); const ult = L.reduce((m, a) => a.d > m ? a.d : m, "");
+      const R = L.filter(a => a.d.slice(0, 7) === ult.slice(0, 7)); return {nome, q, ult, c: R.reduce((s, a) => s + a.e, 0) / R.reduce((s, a) => s + a.q, 0)}; }).sort((a, b) => b.q - a.q);
+    const p = forn[0]; if (!p || !isFinite(p.c)) return;
+    S.ingr[n].costo = Math.round(p.c * 1000) / 1000; S.ingr[n].fonte = "fattura " + p.nome.split(" ")[0] + " " + p.ult.split("-").reverse().join("/");
+    fatti.push(`${n.replace(/_/g, " ")}: ${eur(S.ingr[n].costo)}/${S.ingr[n].u} (${p.nome.split(" ")[0]}${forn.length > 1 ? ", ignorati: " + forn.slice(1).map(f => f.nome.split(" ")[0]).join(", ") : ""})`); });
+  salva(); alert(fatti.length ? "Costi aggiornati (fornitore principale = quello da cui compriamo di più):\n" + fatti.join("\n") : "Nessun ingrediente collegato."); mostra();
 }
 function selCol(id, campo, facolt) {
   const f = F[id];
