@@ -228,6 +228,15 @@ function iniziale() {
   return st;
 }
 
+// Costi reali ricavati dalle fatture di agosto-novembre 2026 (per unità dell'ingrediente: €/kg, €/l o €/pezzo)
+const COSTI_FATTURE = {mozzarella: 7.39, bufala: 3.07, stracciatella: 13.89, burrata: 2.08, gorgonzola: 12.27, provola: 12.5, stracchino: 11.38,
+  pomodoro: 1.39, patatine: 1.31, patate_dippers: 2.71, patatine_chips: 3.05, salsa_4_formaggi: 19.83, salsa_tartufata: 18.89, porcini: 14.49, peperoni: 6.07,
+  carne_manzo_150: 1.59, carne_chianina_220: 3.6, carne_chianina_100: 1.64, carne_angus_220: 2.44, carne_scottona_220: 2.63, carne_fassona_200: 2.51,
+  salsiccia: 6.15, prosciutto_crudo: 8.4, salame_piccante: 7.67, pancetta: 11.5, mortadella_pistacchio: 7.61, sella_san_venanzo: 11.78, bresaola: 26.2,
+  speck: 9.75, prosciutto_cotto: 6.5, crema_nduja: 11.84, lardo: 8.58, tacchino: 11.75, cotoletta_pollo: 1.86, wurstel_90: 0.34, uovo: 0.24, jalapeno_rossi: 0.43,
+  spina_carlsberg: 4.49, spina_grimbergen: 5.83, spina_special_brew: 5.76, spina_tucher: 5.4, coca_033: 0.87, acqua_1l: 0.46, acqua_piccola: 0.36,
+  birra_gluten_free: 1.09, tennents_super: 1.3, the_bottiglia: 1.01, funghi: 4.5, cipolla_rossa: 2.2, patate: 1.4, zucchine: 2.2, melanzane: 1.91,
+  lattuga: 2.39, pachino: 7.65, crema_zucca: 9.88, pomodori_secchi: 6.07, alici: 13.47, nutella: 8.26, gamberetti: 15.46};
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 if (!S || !S.cats) S = iniziale();
@@ -668,6 +677,7 @@ function mostra(tieniFocus) {
   $("main").innerHTML = VISTE.find(v => v[0] === vista)[2]();
   if (pos != null) { const c = $("cerca"); c.focus(); c.setSelectionRange(pos, pos); }
 }
+for (const [n, c] of Object.entries(COSTI_FATTURE)) if (S.ingr[n] && S.ingr[n].costo == null) S.ingr[n].costo = c; // non tocca i costi già inseriti
 salva();
 mostra();
 </script>
