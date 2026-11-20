@@ -147,15 +147,56 @@ def importa_inventario(con, f, tabella="inventari"):
     sostituisci(con, tabella, df, ["data"])
 
 
+def _ber_octets(b: bytes) -> bytes:
+    """Concatena il contenuto di tutti gli OCTET STRING di un file firmato .p7m (CAdES/DER o BER).
+    Serve perché spesso l'XML è spezzato in blocchi da ~1000 byte."""
+    out, stack, i = bytearray(), [], 0
+
+    def walk(i, fine):
+        while i < fine:
+            if b[i] == 0 and i + 1 < len(b) and b[i + 1] == 0:  # fine contenuto a lunghezza indefinita
+                return i + 2
+            tag = b[i]; i += 1
+            if tag & 0x1F == 0x1F:  # tag lungo
+                while b[i] & 0x80: i += 1
+                i += 1
+            ln = b[i]; i += 1
+            if ln == 0x80:
+                if tag & 0x20:
+                    i = walk(i, len(b)); continue
+                raise ValueError("BER non valido")
+            if ln & 0x80:
+                n = ln & 0x7F; ln = int.from_bytes(b[i:i + n], "big"); i += n
+            if tag & 0x20:
+                walk(i, min(i + ln, len(b)))
+            elif tag == 0x04:
+                out.extend(b[i:i + ln])
+            i += ln
+        return i
+
+    walk(0, len(b))
+    return bytes(out)
+
+
 def estrai_xml(raw: bytes) -> bytes:
-    """Restituisce l'XML della FatturaPA. Gestisce .xml e, nella maggior parte dei casi, .p7m firmati."""
+    """Restituisce l'XML della FatturaPA. Gestisce .xml, .p7m firmati (anche in base64)."""
     if raw.lstrip()[:1] == b"<":
         return raw
-    m = re.search(rb"<\?xml.*?</[\w:]*FatturaElettronica>", raw, re.S) or \
-        re.search(rb"<[\w:]*FatturaElettronica[\s>].*?</[\w:]*FatturaElettronica>", raw, re.S)
+    trova = lambda x: re.search(rb"(<\?xml.*?)?<([\w-]+:)?FatturaElettronica[\s>].*?</([\w-]+:)?FatturaElettronica>", x, re.S)
+    try:
+        if raw[:1] != b"\x30":  # p7m salvato in base64
+            import base64
+            raw = base64.b64decode(re.sub(rb"[^A-Za-z0-9+/=]", b"", raw))
+        m = trova(_ber_octets(raw))
+        if m:
+            return m.group(0)
+    except Exception:
+        pass
+    m = trova(raw)
     if not m:
-        raise ValueError("p7m non leggibile in modo semplice (serve estrazione con openssl)")
-    return m.group(0)
+        raise ValueError("p7m non leggibile")
+    # toglie le intestazioni dei blocchi (0x04 + lunghezza) che spezzano l'XML: il byte 0x04 non esiste in un XML valido
+    return re.sub(rb"\x04(?:\x82[\x00-\xff]{2}|\x81[\x00-\xff]|\xef\xbf\xbd[\x00-\x7f]?\xef\xbf\xbd|[\x00-\x7f])", b"", m.group(0), flags=re.S)
 
 
 def _t(el, percorso, default=""):

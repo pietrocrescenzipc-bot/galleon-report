@@ -29,7 +29,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 6px;b
 td.n,th.n{text-align:right}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
 .slot{border:2px dashed var(--line);border-radius:12px;padding:12px}.slot.ok{border-color:var(--ok);border-style:solid}
-.warn{color:var(--ko);font-size:13px}
+.warn{color:var(--ko);font-size:13px}.tabf td{vertical-align:top}
 .top{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .ir input[list]{min-width:0}
 @media (max-width:680px){
@@ -344,7 +344,128 @@ function vistaImporta() {
         ${id === "ricette" ? `<br><label class="mut">categoria: ${selCol(id, "c", true)}</label><br><label class="mut">prezzo: ${selCol(id, "p", true)}</label>
           <br><button class="b p" style="margin-top:8px" onclick="importaRicette()">Importa nel ricettario</button>` : ""}
         ${id === "vendite" ? avvisoVendite() : ""}` : ""}</div>`; }).join("")}</div>
+  <div class="card"><h2>🧾 Fatture d'acquisto (XML, P7M o ZIP)</h2>
+    <p class="mut">Carica le fatture scaricate da Fatture e Corrispettivi (anche lo ZIP del download massivo) o da Zucchetti. Per ogni prodotto scegli l'ingrediente e il <b>fattore</b>
+    (quanti kg/l/pezzi dell'ingrediente ci sono in 1 unità della fattura, es. cubo da 3 kg → 3). La scelta viene ricordata per le prossime volte.</p>
+    <input type="file" multiple accept=".xml,.p7m,.zip" onchange="caricaFatture(this.files)"> ${FAT.righe.length ? `<span class="mut">${FAT.file} file · ${FAT.righe.length} righe · ${eur(FAT.righe.reduce((a, r) => a + r.eur, 0))} imponibile</span>` : ""}
+    ${FAT.errori.length ? `<p class="warn">Non letti: ${FAT.errori.map(esc).join(", ")}</p>` : ""}
+    ${tabellaFatture()}</div>
   ${risultato()}`;
+}
+
+/* ===== FATTURE ELETTRONICHE ===== */
+const FAT = {righe: [], file: 0, errori: []};
+S.mappa = S.mappa || {};
+function berOctets(b) { // concatena gli OCTET STRING di un .p7m (DER/BER, anche a blocchi)
+  const out = []; let tot = 0;
+  function walk(i, fine, prof) {
+    if (prof > 60) throw new Error("troppo annidato");
+    while (i < fine) {
+      if (b[i] === 0 && b[i + 1] === 0) return i + 2;
+      const tag = b[i++]; if ((tag & 0x1f) === 0x1f) { while (b[i] & 0x80) i++; i++; }
+      let ln = b[i++];
+      if (ln === 0x80) { if (tag & 0x20) { i = walk(i, b.length, prof + 1); continue; } throw new Error("BER"); }
+      if (ln & 0x80) { const n = ln & 0x7f; ln = 0; for (let k = 0; k < n; k++) ln = ln * 256 + b[i++]; }
+      if (tag & 0x20) walk(i, Math.min(i + ln, b.length), prof + 1);
+      else if (tag === 0x04) { out.push(b.subarray(i, i + ln)); tot += ln; }
+      i += ln;
+    }
+    return i;
+  }
+  walk(0, b.length, 0);
+  const r = new Uint8Array(tot); let o = 0; out.forEach(x => { r.set(x, o); o += x.length; }); return r;
+}
+const latin = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return s; };
+const daLatin = s => Uint8Array.from(s, c => c.charCodeAt(0));
+const RX_FE = /(<\?xml[\s\S]*?)?<([\w-]+:)?FatturaElettronica[\s>][\s\S]*?<\/([\w-]+:)?FatturaElettronica>/;
+function estraiXml(u8) {
+  let t = latin(u8.subarray(0, 300));
+  if (t.trimStart().startsWith("<")) return new TextDecoder("utf-8").decode(u8);
+  let bin = u8;
+  if (u8[0] !== 0x30) { try { bin = daLatin(atob(latin(u8).replace(/[^A-Za-z0-9+/=]/g, ""))); } catch (e) {} }
+  try { const m = latin(berOctets(bin)).match(RX_FE); if (m) return new TextDecoder("utf-8").decode(daLatin(m[0])); } catch (e) {}
+  const m = latin(bin).match(RX_FE); if (!m) throw new Error("fattura non trovata nel file");
+  return new TextDecoder("utf-8").decode(daLatin(m[0].replace(/\x04(?:\x82[\s\S]{2}|\x81[\s\S]|\xef\xbf\xbd[\x00-\x7f]?\xef\xbf\xbd|[\x00-\x7f])/g, "")));
+}
+function leggiFattura(xml, nomeFile) {
+  const d = new DOMParser().parseFromString(xml, "application/xml");
+  if (d.getElementsByTagName("parsererror").length) throw new Error("XML non valido");
+  const tutti = (el, n) => [...el.getElementsByTagNameNS("*", n)], uno = (el, n) => tutti(el, n)[0], tx = (el, n) => uno(el, n)?.textContent.trim() || "";
+  const ced = uno(d, "CedentePrestatore"), forn = tx(ced, "Denominazione") || (tx(ced, "Nome") + " " + tx(ced, "Cognome")).trim();
+  const out = [];
+  tutti(d, "FatturaElettronicaBody").forEach(body => {
+    const data = tx(uno(body, "DatiGeneraliDocumento"), "Data"), tipo = tx(body, "TipoDocumento"), segno = tipo === "TD04" ? -1 : 1;
+    tutti(body, "DettaglioLinee").forEach(l => {
+      const eurv = +tx(l, "PrezzoTotale") * segno; if (!eurv) return;
+      out.push({forn, data, desc: tx(l, "Descrizione").replace(/\s+/g, " "), q: +(tx(l, "Quantita") || 1) * segno, um: tx(l, "UnitaMisura").toUpperCase(), eur: eurv, file: nomeFile});
+    });
+  });
+  return out;
+}
+async function caricaFatture(files) {
+  FAT.righe = []; FAT.file = 0; FAT.errori = [];
+  const elenco = [];
+  for (const f of files) {
+    const u8 = new Uint8Array(await f.arrayBuffer());
+    if (u8[0] === 0x50 && u8[1] === 0x4b) { // ZIP
+      try { const z = XLSX.CFB.read(u8, {type: "array"});
+        z.FileIndex.forEach((e, i) => { const n = z.FullPaths[i]; if (e.content && /\.(xml|p7m)$/i.test(n) && !/metadat|_MT_/i.test(n)) elenco.push([n.split("/").pop(), new Uint8Array(e.content)]); });
+      } catch (e) { FAT.errori.push(f.name + " (zip non leggibile)"); }
+    } else elenco.push([f.name, u8]);
+  }
+  for (const [nome, u8] of elenco) {
+    try { const r = leggiFattura(estraiXml(u8), nome); FAT.righe.push(...r); FAT.file++; } catch (e) { FAT.errori.push(nome); }
+  }
+  mostra();
+}
+const INDOVINA = [[/mozz.*(pizz|julienne|fior.?di.?latte|filone|cubo)|fior.?di.?latte/, "mozzarella"], [/bufala/, "bufala"], [/stracciatella/, "stracciatella"], [/burrata/, "burrata"],
+  [/gorgonzola/, "gorgonzola"], [/provola/, "provola"], [/stracchino/, "stracchino"], [/scamorza/, "scamorza"], [/pecorino/, "pecorino"], [/grana|parmigian/, "grana"], [/emmental/, "emmental"], [/cheddar/, "cheddar"],
+  [/polpa|pelat|passata|pomodoro.*(latta|kg)/, "pomodoro"], [/pachino|ciliegin/, "pachino"], [/salsiccia/, "salsiccia"], [/crudo/, "prosciutto_crudo"], [/cotto/, "prosciutto_cotto"], [/speck/, "speck"],
+  [/bresaola/, "bresaola"], [/salame|spianata/, "salame_piccante"], [/mortadella/, "mortadella"], [/bacon|pancetta/, "bacon"], [/wurstel/, "wurstel"], [/funghi|champignon/, "funghi"],
+  [/patat.*(stick|fritt|surgel|julienne)|french.?fries/, "patatine"], [/rucola/, "rucola"], [/olio.*(extra|evo)/, "olio"]];
+function indovina(desc) {
+  const d = desc.toLowerCase(); for (const [rx, n] of INDOVINA) if (rx.test(d) && S.ingr[n]) return n; return "";
+}
+function fattore(desc, um, n) {
+  const u = S.ingr[n]?.u, d = desc.toUpperCase().replace(/,/g, ".");
+  if (!u) return 1;
+  if (u === "kg") { if (um === "KG") return 1; let m = d.match(/KG\.?\s*(\d+(\.\d+)?)/) || d.match(/(\d+(\.\d+)?)\s*KG/); if (m) return +m[1];
+    m = d.match(/GR?\.?\s*(\d+)/) || d.match(/(\d+)\s*GR?\b/); if (m) return +m[1] / 1000; return 1; }
+  if (u === "l") { if (/^(L|LT|LITRI)$/.test(um)) return 1; let m = d.match(/(\d+)\s*ML/); if (m) return +m[1] / 1000; m = d.match(/(\d+(\.\d+)?)\s*(LT|L)\b/); if (m) return +m[1]; return 1; }
+  return 1;
+}
+function gruppiFatture() {
+  S.mappa = S.mappa || {};
+  const g = {};
+  FAT.righe.forEach(r => { const k = norm(r.desc); (g[k] = g[k] || {k, desc: r.desc, forn: r.forn, um: r.um, q: 0, eur: 0}); g[k].q += r.q; g[k].eur += r.eur; });
+  return Object.values(g).sort((a, b) => b.eur - a.eur).map(x => { const m = S.mappa[x.k] || {}; const n = m.n ?? indovina(x.desc);
+    return {...x, n, f: m.f ?? (n ? fattore(x.desc, x.um, n) : 1)}; });
+}
+function tabellaFatture() {
+  if (!FAT.righe.length) return "";
+  const G = gruppiFatture(); window._gruppi = G;
+  return `<div style="overflow-x:auto"><table class="tabf"><tr><th>Prodotto in fattura</th><th class="n">Quantità</th><th class="n">€ totale</th><th>Ingrediente</th><th class="n">Fattore</th><th class="n">Costo per unità</th></tr>
+   ${G.map((x, i) => { const u = S.ingr[x.n]?.u || ""; const c = x.n && x.f ? x.eur / (x.q * x.f) : null;
+     return `<tr><td>${esc(x.desc)}<br><small class="mut">${esc(x.forn)}</small></td><td class="n">${IT(x.q)} ${esc(x.um)}</td><td class="n">${eur(x.eur)}</td>
+     <td><input list="ingrlist" value="${x.n}" placeholder="(ignora)" style="width:150px" onchange="mappa(${i},'n',this.value)"></td>
+     <td class="n"><input style="width:65px;text-align:right" value="${x.n ? IT(x.f, 3) : ""}" onchange="mappa(${i},'f',this.value)"></td>
+     <td class="n"><b>${c == null ? "–" : eur(c) + "/" + u}</b></td></tr>`; }).join("")}</table></div>
+   <datalist id="ingrlist">${Object.keys(S.ingr).sort().map(n => `<option value="${n}">`).join("")}</datalist>
+   <p><button class="b p" onclick="applicaCosti()">Applica i costi agli ingredienti</button> <span class="mut">Se più righe vanno sullo stesso ingrediente, si fa la media pesata.</span></p>`;
+}
+function mappa(i, campo, v) {
+  const x = window._gruppi[i], m = S.mappa[x.k] = S.mappa[x.k] || {n: x.n, f: x.f};
+  if (campo === "n") { const n = norm(v); m.n = n; if (n && !S.ingr[n]) S.ingr[n] = nuovoIng(n); m.f = n ? fattore(x.desc, x.um, n) : 1; }
+  else m.f = num(v) || 1;
+  salva(); mostra();
+}
+function acquistiDaFatture() {
+  const o = {}; gruppiFatture().forEach(x => { if (x.n) o[x.n] = (o[x.n] || 0) + x.q * x.f; }); return o;
+}
+function applicaCosti() {
+  const agg = {}; gruppiFatture().forEach(x => { if (!x.n) return; S.mappa[x.k] = {n: x.n, f: x.f}; const a = agg[x.n] = agg[x.n] || {e: 0, q: 0}; a.e += x.eur; a.q += x.q * x.f; });
+  const fatti = Object.entries(agg).filter(([, a]) => a.q > 0).map(([n, a]) => { S.ingr[n].costo = Math.round(a.e / a.q * 1000) / 1000; return `${n.replace(/_/g, " ")}: ${eur(S.ingr[n].costo)}/${S.ingr[n].u}`; });
+  salva(); alert(fatti.length ? "Costi aggiornati:\n" + fatti.join("\n") : "Nessun ingrediente collegato."); mostra();
 }
 function selCol(id, campo, facolt) {
   const f = F[id];
@@ -412,7 +533,7 @@ function importaRicette() {
 }
 function risultato() {
   if (!F.vendite || !F.inizio || !F.fine) return `<div class="card mut">Carica vendite, conta iniziale e conta finale per vedere lo scarto.</div>`;
-  const m = mappaProdotti(), vend = somma("vendite"), acq = somma("acquisti"), i0 = somma("inizio"), i1 = somma("fine"), teo = {};
+  const m = mappaProdotti(), vend = somma("vendite"), acq = F.acquisti ? somma("acquisti") : acquistiDaFatture(), i0 = somma("inizio"), i1 = somma("fine"), teo = {};
   for (const [k, q] of Object.entries(vend)) { const p = m[k]; if (!p) continue;
     p.ing.forEach(r => { const s = qtaStd(r); if (s != null) teo[r.n] = (teo[r.n] || 0) + s * q; }); }
   const contati = Object.keys(i1).filter(n => n in i0);
@@ -421,7 +542,7 @@ function risultato() {
     .sort((a, b) => (b.eur ?? b.d) - (a.eur ?? a.d));
   const tot = righe.reduce((a, r) => a + Math.max(0, r.eur || 0), 0);
   window._scarto = righe;
-  return `<div class="card"><h2>Scarto della settimana</h2><p class="mut">Reale = conta iniziale + acquisti − conta finale. Ricetta = prodotti venduti × grammature. Solo gli ingredienti presenti in entrambe le conte.</p>
+  return `<div class="card"><h2>Scarto della settimana</h2><p class="mut">${!F.acquisti && FAT.righe.length ? "Acquisti presi dalle fatture XML caricate (controlla che siano del periodo tra le due conte). " : ""}Reale = conta iniziale + acquisti − conta finale. Ricetta = prodotti venduti × grammature. Solo gli ingredienti presenti in entrambe le conte.</p>
     <p style="font-size:26px;font-weight:700;margin:4px 0;color:${tot > 30 ? "var(--ko)" : "var(--ok)"}">${eur(tot)} <span class="mut" style="font-weight:400">consumati oltre la ricetta</span></p>
     <table><tr><th>Ingrediente</th><th class="n">Ricetta</th><th class="n">Usato</th><th class="n">Differenza</th><th class="n">Scarto</th><th class="n">€</th></tr>
     ${righe.map(r => { const col = r.pct == null ? "" : r.pct > 0.05 ? "var(--ko)" : r.pct > 0.025 ? "var(--warn)" : "var(--ok)";
@@ -443,8 +564,9 @@ function vistaCE() {
   const acqFood = sommaCol("acquisti", fa?.e, r => !fa.c || /food|cibo|aliment|merc/.test(cat(r)) || cat(r) === "");
   const acqBev = sommaCol("acquisti", fa?.e, r => fa.c && /bev|bibit|birr|vin/.test(cat(r)));
   const acqAltro = sommaCol("acquisti", fa?.e) - acqFood - acqBev;
+  const acqFat = F.acquisti ? 0 : FAT.righe.reduce((a, r) => a + r.eur, 0);
   const r0 = valoreConta("inizio"), r1 = valoreConta("fine");
-  const merci = acqFood + acqBev + (F.inizio && F.fine ? r0.v - r1.v : 0);
+  const merci = acqFood + acqBev + acqFat + (F.inizio && F.fine ? r0.v - r1.v : 0);
   let pers = 0;
   if (fp) pers = fp.e ? sommaCol("personale", fp.e) : fp.righe.reduce((a, r) => a + (num(r[fp.q]) || 0) * (num(r[fp.h]) || 0), 0);
   const altri = sommaCol("costi", F.costi?.e) + acqAltro;
@@ -452,7 +574,7 @@ function vistaCE() {
   const pc = x => ricavi ? IT(x / ricavi * 100, 1) + "%" : "–";
   const mc = ricavi ? margine / ricavi : 0, pareggio = mc > 0 ? (pers + altri) / mc : null;
   const riga = (t, v, b, c) => `<tr style="${b ? "font-weight:700" : ""}"><td>${t}</td><td class="n" style="${c ? `color:${c}` : ""}">${eur(v)}</td><td class="n mut">${pc(v)}</td></tr>`;
-  const mancano = ["vendite", "acquisti", "personale", "costi"].filter(x => !F[x]);
+  const mancano = ["vendite", "acquisti", "personale", "costi"].filter(x => !F[x] && !(x === "acquisti" && FAT.righe.length));
   return `<div class="card"><h2>Conto economico del periodo</h2><p class="mut">Calcolato dai file caricati in "Importa e calcola". Le rimanenze sono le due conte valorizzate ai costi degli ingredienti
     (con le sole conte di classe A è una stima: per il mese usate l'inventario completo).</p>
     <div class="top"><label class="mut">IVA media sulle vendite % <input style="width:60px" value="${CEP.iva}" onchange="CEP.iva=num(this.value)||10;mostra()"></label>
@@ -460,7 +582,7 @@ function vistaCE() {
     ${mancano.length ? `<p class="warn">Da caricare in "Importa e calcola": ${mancano.join(", ")}${!F.vendite?.e && F.vendite ? " · nelle vendite scegli la colonna dell'incasso" : ""}.</p>` : ""}
     <table><tr><th>Voce</th><th class="n">Euro</th><th class="n">% sui ricavi</th></tr>
     ${riga("Ricavi netti (IVA esclusa)", ricavi, true)}
-    ${riga("Acquisti food", acqFood)}${acqBev ? riga("Acquisti bevande", acqBev) : ""}
+    ${acqFat ? riga("Acquisti da fatture XML", acqFat) : riga("Acquisti food", acqFood)}${acqBev ? riga("Acquisti bevande", acqBev) : ""}
     ${F.inizio && F.fine ? riga("Variazione rimanenze (iniziale − finale)", r0.v - r1.v) : ""}
     ${riga("COSTO MERCI", merci, true)}${riga("MARGINE", margine, true)}
     ${riga("Costo personale", pers)}${riga("Altri costi" + (acqAltro ? " (incl. acquisti non food)" : ""), altri)}
