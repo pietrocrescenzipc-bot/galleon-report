@@ -198,7 +198,7 @@ def estrai_xml(raw: bytes) -> bytes:
     if not m:
         raise ValueError("p7m non leggibile")
     # toglie le intestazioni dei blocchi (0x04 + lunghezza) che spezzano l'XML: il byte 0x04 non esiste in un XML valido
-    return re.sub(rb"\x04(?:\x82[\x00-\xff]{2}|\x81[\x00-\xff]|\xef\xbf\xbd[\x00-\x7f]?\xef\xbf\xbd|[\x00-\x7f])", b"", m.group(0), flags=re.S)
+    return re.sub(rb"\x04(?:\x82[\x00-\xff]{2}|\x81[\x00-\xff]|\xef\xbf\xbd(?:[\x00-\x1f](?:[\x00-\x7f]|\xef\xbf\xbd)|\xef\xbf\xbd)|[\x00-\x7f])", b"", m.group(0), flags=re.S)
 
 
 def _t(el, percorso, default=""):

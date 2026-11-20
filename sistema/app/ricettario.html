@@ -388,7 +388,7 @@ function estraiXml0(u8) {
   if (u8[0] !== 0x30) { try { bin = daLatin(atob(latin(u8).replace(/[^A-Za-z0-9+/=]/g, ""))); } catch (e) {} }
   if (!latin(bin.subarray(0, 60)).includes("\xef\xbf\xbd")) try { const m = latin(berOctets(bin)).match(RX_FE); if (m) return new TextDecoder("utf-8").decode(daLatin(m[0])); } catch (e) {}
   const m = latin(bin).match(RX_FE); if (!m) throw new Error("fattura non trovata nel file");
-  return new TextDecoder("utf-8").decode(daLatin(m[0].replace(/\x04(?:\x82[\s\S]{2}|\x81[\s\S]|\xef\xbf\xbd[\x00-\x7f]?\xef\xbf\xbd|[\x00-\x7f])/g, "")));
+  return new TextDecoder("utf-8").decode(daLatin(m[0].replace(/\x04(?:\x82[\s\S]{2}|\x81[\s\S]|\xef\xbf\xbd(?:[\x00-\x1f](?:[\x00-\x7f]|\xef\xbf\xbd)|\xef\xbf\xbd)|[\x00-\x7f])/g, "")));
 }
 function leggiFattura(xml, nomeFile) {
   const d = new DOMParser().parseFromString(xml, "application/xml");
