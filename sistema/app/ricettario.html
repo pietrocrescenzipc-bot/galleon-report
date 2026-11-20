@@ -31,6 +31,17 @@ td.n,th.n{text-align:right}
 .slot{border:2px dashed var(--line);border-radius:12px;padding:12px}.slot.ok{border-color:var(--ok);border-style:solid}
 .warn{color:var(--ko);font-size:13px}
 .top{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ir input[list]{min-width:0}
+@media (max-width:680px){
+  main{padding:8px}.card{padding:12px}nav{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}nav button,nav a{padding:7px 11px}
+  .ph{flex-wrap:wrap;gap:4px 8px}.ph b{flex-basis:100%}
+  .ir{grid-template-columns:1fr 34px 1fr 28px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .ir input[list]{grid-column:1/-1;font-weight:600}
+  .tabi tr:first-child{display:none}
+  .tabi tr{display:grid;grid-template-columns:1fr 1fr 1fr 34px;gap:6px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+  .tabi td{border:0;padding:0}.tabi td:first-child{grid-column:1/-1}.tabi td:first-child input{font-weight:600}
+  .tabi td.n input{width:100%!important}
+}
 </style>
 </head>
 <body>
@@ -293,12 +304,12 @@ function vistaIngredienti() {
   const nomi = Object.keys(S.ingr).sort((a, b) => (S.ingr[a].classe + a).localeCompare(S.ingr[b].classe + b));
   return `<div class="card"><h2>Ingredienti</h2><p class="mut">Inserisci il <b>costo d'acquisto</b> per unità (€/kg, €/l o €/pezzo) dalle vostre fatture: serve per food cost e scarto in euro.
     Classe A = conta settimanale, B = mensile, C = non si conta. Rinominare un ingrediente lo aggiorna in tutte le ricette.</p>
-   <table><tr><th>Ingrediente</th><th>Unità</th><th>Classe</th><th class="n">Costo €</th><th class="n">Usato in</th><th></th></tr>
+   <table class="tabi"><tr><th>Ingrediente</th><th>Unità</th><th>Classe</th><th class="n">Costo €</th><th class="n">Uso</th><th></th></tr>
    ${nomi.map(n => { const g = S.ingr[n]; return `<tr><td><input value="${n}" onchange="rinominaIng('${n}',this.value)" style="width:100%"></td>
      <td><select onchange="S.ingr['${n}'].u=this.value;salva()">${["kg", "l", "pz"].map(u => `<option ${u === g.u ? "selected" : ""}>${u}</option>`).join("")}</select></td>
      <td><select onchange="S.ingr['${n}'].classe=this.value;salva();mostra()">${["A", "B", "C"].map(u => `<option ${u === g.classe ? "selected" : ""}>${u}</option>`).join("")}</select></td>
-     <td class="n"><input style="width:80px;text-align:right" inputmode="decimal" placeholder="?" value="${g.costo ?? ""}" onchange="S.ingr['${n}'].costo=this.value===''?null:num(this.value);salva()"></td>
-     <td class="n">${uso[n] || 0}</td><td>${uso[n] ? "" : `<button class="x" onclick="delete S.ingr['${n}'];salva();mostra()">×</button>`}</td></tr>`; }).join("")}</table></div>`;
+     <td class="n"><input style="width:80px;text-align:right" inputmode="decimal" placeholder="€ costo" value="${g.costo ?? ""}" onchange="S.ingr['${n}'].costo=this.value===''?null:num(this.value);salva()"></td>
+     <td class="n mut">usato in ${uso[n] || 0}</td><td>${uso[n] ? "" : `<button class="x" onclick="delete S.ingr['${n}'];salva();mostra()">×</button>`}</td></tr>`; }).join("")}</table></div>`;
 }
 function rinominaIng(vecchio, nuovo) {
   nuovo = norm(nuovo); if (!nuovo || nuovo === vecchio) return;
