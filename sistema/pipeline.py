@@ -762,7 +762,7 @@ def esporta_app(R):
     out = REPORT / "app"
     out.mkdir(exist_ok=True)
     (out / "dati.js").write_text("window.GALLEON = " + json.dumps(dati, ensure_ascii=False) + ";", encoding="utf-8")
-    for nome in ("index.html", "conta.html"):
+    for nome in ("index.html", "conta.html", "ricettario.html"):
         sorgente = BASE / "app" / nome
         if sorgente.exists():
             shutil.copy(sorgente, out / nome)

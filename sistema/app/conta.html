@@ -36,7 +36,7 @@ a{color:var(--acc)}
 
   <details class="card">
     <summary><b>Modifica l'elenco degli ingredienti</b></summary>
-    <p class="mut">Una riga per ingrediente: <code>nome;unità;suggerimento</code>. Il nome deve essere <b>uguale</b> a quello in <code>anagrafiche/ingredienti.csv</code>, e anche l'unità (kg, l, pz).</p>
+    <p class="mut">Una riga per ingrediente: <code>nome;unità;suggerimento</code>. Il nome deve essere <b>uguale</b> a quello del <a href="ricettario.html#ingredienti">ricettario</a>, e anche l'unità (kg, l, pz). Se non modifichi nulla, l'elenco prende da solo gli ingredienti di classe A del ricettario.</p>
     <textarea id="elenco"></textarea>
     <p><button class="sec" onclick="salvaElenco()">Salva elenco</button> <button class="sec" onclick="ripristina()">Ripristina predefinito</button></p>
   </details>
@@ -74,14 +74,20 @@ const oggi = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
 let bozza = {};
 try { bozza = JSON.parse(leggi(K.bozza, "{}")) || {}; } catch (e) { bozza = {}; }
 
+// Se il ricettario è compilato su questo dispositivo, l'elenco = ingredienti di classe A del ricettario
+function daRicettario() {
+  try { const r = JSON.parse(localStorage.getItem("galleon_ricettario")); if (!r || !r.ingr) return null;
+    const a = Object.entries(r.ingr).filter(([, g]) => g.classe === "A").map(([n, g]) => `${n};${g.u};`);
+    return a.length ? a.join("\n") : null; } catch (e) { return null; }
+}
 function ingredienti() {
-  return leggi(K.elenco, PREDEFINITO).split("\n").map(r => r.split(";").map(x => x.trim()))
+  return leggi(K.elenco, daRicettario() || PREDEFINITO).split("\n").map(r => r.split(";").map(x => x.trim()))
     .filter(r => r[0]).map(([nome, unita = "kg", nota = ""]) => ({nome, unita, nota}));
 }
 
 function disegna() {
   $("data").value = bozza._data || oggi();
-  $("elenco").value = leggi(K.elenco, PREDEFINITO);
+  $("elenco").value = leggi(K.elenco, daRicettario() || PREDEFINITO);
   $("lista").innerHTML = ingredienti().map((g, i) => `
     <div class="riga ${bozza[g.nome] !== undefined && bozza[g.nome] !== "" ? "ok" : ""}" id="r${i}">
       <div><b>${g.nome.replace(/_/g, " ")}</b>${g.nota ? `<small>${g.nota}</small>` : ""}</div>
@@ -133,7 +139,7 @@ function azzera() {
   bozza = {}; scrivi(K.bozza, "{}"); disegna();
 }
 function salvaElenco() { scrivi(K.elenco, $("elenco").value.trim()); disegna(); }
-function ripristina() { scrivi(K.elenco, PREDEFINITO); disegna(); }
+function ripristina() { try { localStorage.removeItem(K.elenco); } catch (e) {} disegna(); }
 
 disegna();
 </script>

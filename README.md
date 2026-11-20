@@ -7,6 +7,7 @@ Cruscotto gestionale per The Galleon Pub & Pizzeria: rotta verso l'utile, food c
 ## Come funziona
 - `sistema/pipeline.py` gira ogni notte **sul PC del locale**: legge chiusure di cassa, fatture elettroniche e presenze, calcola tutto e scrive `report/app/dati.js` + l'app.
 - **Conta settimanale**: `conta.html` si apre dal telefono, si contano i 9 ingredienti di classe A (5 minuti) e si invia il file `conta_AAAA-MM-GG.csv` in `dati/inbox/conte`. Nella vista *Sprechi* compare lo scarto della settimana ingrediente per ingrediente.
+- **Ricettario** (`ricettario.html`): categorie, prodotti e ingredienti con grammature, food cost per prodotto, classi A/B/C. Già compilato dal menu online, da completare. Contiene anche **Importa e calcola** (Excel/CSV di vendite, acquisti, conte, personale, altri costi → scarto della settimana e conto economico, tutto nel browser) ed esporta `ricette.csv` / `ingredienti.csv` per il sistema del PC.
 - L'app (`index.html`) legge solo `dati.js` (numeri già sintetizzati) e funziona anche offline con doppio clic.
 - Dettagli in [`sistema/ARCHITETTURA.md`](sistema/ARCHITETTURA.md).
 
