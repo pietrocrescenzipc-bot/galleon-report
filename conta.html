@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Galleon · Conta settimanale</title>
+<style>
+:root{--bg:#10151c;--card:#19212b;--txt:#eef2f6;--mut:#94a1b2;--acc:#e0a526;--ok:#2e9e62;--line:#2a3542}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:18px 16px 6px}h1{font-size:21px;margin:0}p.mut,.mut{color:var(--mut);font-size:13px}
+main{padding:0 12px 120px;max-width:560px;margin:auto}.card{background:var(--card);border-radius:14px;padding:14px;margin:10px 0}
+label.data{display:flex;justify-content:space-between;align-items:center;gap:10px}
+input{font:inherit;color:var(--txt);background:#0d1218;border:1px solid var(--line);border-radius:10px;padding:10px}
+.riga{display:grid;grid-template-columns:1fr 110px 34px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.riga:first-child{border-top:0}.riga b{font-weight:600}.riga small{display:block;color:var(--mut)}
+.riga input{width:100%;text-align:right;font-size:18px}.u{color:var(--mut);font-size:14px}
+.ok input{border-color:var(--ok)}
+button{font:inherit;border:0;border-radius:12px;padding:13px 16px;cursor:pointer}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#0b0f14ee;padding:12px;display:flex;gap:8px;justify-content:center}
+.bar button{flex:1;max-width:270px}.prim{background:var(--acc);color:#1b1300;font-weight:700}.sec{background:#2a3542;color:var(--txt)}
+textarea{width:100%;min-height:200px;font:14px ui-monospace,monospace;color:var(--txt);background:#0d1218;border:1px solid var(--line);border-radius:10px;padding:10px}
+#stato{font-size:14px;color:var(--ok);min-height:20px}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚓ Conta settimanale · classe A</h1>
+  <p class="mut">Stesso giorno ogni settimana, <b>prima del servizio</b>. Conta tutto: cella, frigo del banco e confezioni aperte (pesale). Ci vogliono 5 minuti.</p>
+</header>
+<main>
+  <div class="card"><label class="data"><b>Data della conta</b><input type="date" id="data"></label></div>
+
+  <div class="card" id="lista"></div>
+  <div id="stato"></div>
+
+  <details class="card">
+    <summary><b>Modifica l'elenco degli ingredienti</b></summary>
+    <p class="mut">Una riga per ingrediente: <code>nome;unità;suggerimento</code>. Il nome deve essere <b>uguale</b> a quello in <code>anagrafiche/ingredienti.csv</code>, e anche l'unità (kg, l, pz).</p>
+    <textarea id="elenco"></textarea>
+    <p><button class="sec" onclick="salvaElenco()">Salva elenco</button> <button class="sec" onclick="ripristina()">Ripristina predefinito</button></p>
+  </details>
+
+  <div class="card mut">
+    <b style="color:var(--txt)">Cosa fare col file</b><br>
+    Premi <b>Invia conta</b> e mandalo dove arriva al PC del locale (email del report, WhatsApp Web, Drive). Poi va messo nella cartella
+    <code>dati/inbox/conte</code>: la notte il sistema calcola quanto è stato usato in più rispetto alle ricette e lo mostra in <a href="index.html#sprechi">Sprechi</a>.
+    I numeri restano sul telefono finché non li invii.
+  </div>
+</main>
+<div class="bar">
+  <button class="sec" onclick="azzera()">Azzera</button>
+  <button class="prim" onclick="invia()">Invia conta</button>
+</div>
+
+<script>
+// Classe A del The Galleon (analisi ABC sul menu, 20/11/2026). Modificabile dalla pagina.
+const PREDEFINITO = `mozzarella;kg;fior di latte: filoni interi + aperti pesati
+farina;kg;sacchi + panetti pronti (in kg di farina)
+pomodoro;kg;latte intere × peso + aperte stimate
+carne_burger;kg;tutti gli hamburger (Chianina, Scottona, Angus, Fassona, manzo, pollo)
+salsiccia;kg;
+prosciutto_crudo;kg;pesa il pezzo in affettatrice
+bufala;kg;
+stracciatella;kg;stracciatella + burrata
+patatine;kg;sacchi surgelati`;
+
+const K = {elenco: "galleon_conta_elenco", bozza: "galleon_conta_bozza"};
+const leggi = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } };
+const scrivi = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const $ = id => document.getElementById(id);
+const oggi = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+let bozza = {};
+try { bozza = JSON.parse(leggi(K.bozza, "{}")) || {}; } catch (e) { bozza = {}; }
+
+function ingredienti() {
+  return leggi(K.elenco, PREDEFINITO).split("\n").map(r => r.split(";").map(x => x.trim()))
+    .filter(r => r[0]).map(([nome, unita = "kg", nota = ""]) => ({nome, unita, nota}));
+}
+
+function disegna() {
+  $("data").value = bozza._data || oggi();
+  $("elenco").value = leggi(K.elenco, PREDEFINITO);
+  $("lista").innerHTML = ingredienti().map((g, i) => `
+    <div class="riga ${bozza[g.nome] !== undefined && bozza[g.nome] !== "" ? "ok" : ""}" id="r${i}">
+      <div><b>${g.nome.replace(/_/g, " ")}</b>${g.nota ? `<small>${g.nota}</small>` : ""}</div>
+      <input inputmode="decimal" placeholder="0" value="${bozza[g.nome] ?? ""}" data-nome="${g.nome}" data-i="${i}" oninput="aggiorna(this)">
+      <span class="u">${g.unita}</span>
+    </div>`).join("");
+  conta();
+}
+
+function aggiorna(el) {
+  bozza[el.dataset.nome] = el.value.replace(".", ",");
+  scrivi(K.bozza, JSON.stringify(bozza));
+  $("r" + el.dataset.i).classList.toggle("ok", el.value !== "");
+  conta();
+}
+
+function conta() {
+  const tot = ingredienti().length, fatti = ingredienti().filter(g => (bozza[g.nome] ?? "") !== "").length;
+  $("stato").textContent = fatti === tot ? "✓ Tutto contato, puoi inviare." : `${fatti} di ${tot} contati`;
+  $("stato").style.color = fatti === tot ? "var(--ok)" : "var(--mut)";
+}
+
+$("data").addEventListener("change", e => { bozza._data = e.target.value; scrivi(K.bozza, JSON.stringify(bozza)); });
+
+function csv() {
+  return "ingrediente;quantita\n" + ingredienti().filter(g => (bozza[g.nome] ?? "") !== "")
+    .map(g => `${g.nome};${String(bozza[g.nome]).replace(".", ",")}`).join("\n") + "\n";
+}
+
+async function invia() {
+  const g = ingredienti(), mancano = g.filter(x => (bozza[x.nome] ?? "") === "").map(x => x.nome.replace(/_/g, " "));
+  if (mancano.length && !confirm("Mancano: " + mancano.join(", ") + ".\nInvio lo stesso?")) return;
+  const nome = `conta_${$("data").value || oggi()}.csv`, testo = csv();
+  const file = new File([testo], nome, {type: "text/csv"});
+  try {
+    if (navigator.canShare && navigator.canShare({files: [file]})) {
+      await navigator.share({files: [file], title: nome, text: "Conta settimanale The Galleon"});
+      $("stato").textContent = "✓ Inviata. Metti il file in dati/inbox/conte sul PC del locale.";
+      return;
+    }
+  } catch (e) { if (e.name === "AbortError") return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(file); a.download = nome; a.click();
+  $("stato").textContent = `✓ Scaricato ${nome}. Mettilo in dati/inbox/conte.`;
+}
+
+function azzera() {
+  if (!confirm("Cancello i numeri inseriti?")) return;
+  bozza = {}; scrivi(K.bozza, "{}"); disegna();
+}
+function salvaElenco() { scrivi(K.elenco, $("elenco").value.trim()); disegna(); }
+function ripristina() { scrivi(K.elenco, PREDEFINITO); disegna(); }
+
+disegna();
+</script>
+</body>
+</html>

@@ -308,10 +308,28 @@ function vistaMenu() {
 }
 
 /* ---------- VISTA 4: SPRECHI ---------- */
+function vistaSettimana(soglia) {
+  const S = D.settimanale;
+  if (!S) return `<div class="card sec"><h2>Conta settimanale · classe A</h2><p class="mut">Nessuna conta ancora. Apri <a href="conta.html">conta.html</a> dal telefono, conta gli ingredienti di classe A e metti il file in <code>dati/inbox/conte</code>.</p></div>`;
+  const tot = S.righe.reduce((a, r) => a + Math.max(0, r.valore || 0), 0), mx = Math.max(1, ...S.storico.map(x => x.eccesso));
+  const barre = S.storico.map(x => `<div title="${eur(x.eccesso, 0)}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px">
+     <small class="mut">${eur(Math.round(x.eccesso), 0)}</small><div style="width:70%;height:${Math.max(3, x.eccesso / mx * 90)}px;border-radius:6px 6px 0 0;background:${x.eccesso > 50 ? KO : x.eccesso > 20 ? WARN : OK}"></div>
+     <small class="mut">${x.da.slice(8, 10)}/${x.da.slice(5, 7)}</small></div>`).join("");
+  return `<div class="grid g2 sec"><div class="card"><h2>Ultima settimana · ingredienti classe A</h2><p class="sub">${S.periodo}</p>
+    <div class="big-n" style="color:${tot > 30 ? KO : OK}">${eur(tot)}</div><p class="mut">consumati oltre la ricetta</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px"><tr class="mut"><td>Ingrediente</td><td style="text-align:right">Ricetta</td><td style="text-align:right">Usato</td><td style="text-align:right">Scarto</td></tr>
+    ${S.righe.map(r => { const ko = r.pct > soglia && r.valore > 10; return `<tr style="border-top:1px solid var(--line, #8883)"><td>${r.ingrediente.replace(/_/g, " ")}</td>
+      <td style="text-align:right">${IT.format(Math.round(r.teorico * 10) / 10)} ${r.unita}</td><td style="text-align:right">${IT.format(Math.round(r.reale * 10) / 10)} ${r.unita}</td>
+      <td style="text-align:right;font-weight:600;color:${ko ? KO : r.pct > soglia / 2 ? WARN : OK}">${r.pct > 0 ? "+" : ""}${pct(r.pct)} · ${eur(Math.round(r.valore) || 0, 0)}</td></tr>`; }).join("")}</table></div>
+    <div class="card"><h2>Andamento settimanale</h2><p class="sub">Euro consumati oltre ricetta tra una conta e l'altra: devono scendere dopo dosatori e porzioni pronte</p>
+    <div style="display:flex;gap:6px;height:150px;align-items:stretch">${barre}</div>
+    <p class="mut" style="margin-top:12px">Conta ogni settimana, stesso giorno, prima del servizio: <a href="conta.html">apri la pagina della conta</a>.</p></div></div>`;
+}
+
 function vistaSprechi() {
   const R = D.consumi.righe.filter(r => r.teorico > 0), maxV = Math.max(...R.map(r => Math.abs(r.valore)));
   const tot = R.reduce((a, r) => a + Math.max(0, r.valore), 0), soglia = D.obiettivi.scostamento_consumi_max;
-  return `<div class="grid g2"><div class="card"><h2>Valore dei consumi in eccesso</h2><p class="sub">${D.consumi.periodo}</p>
+  return vistaSettimana(soglia) + `<div class="grid g2"><div class="card"><h2>Mese · tutti gli ingredienti</h2><p class="sub">${D.consumi.periodo}</p>
     <div class="big-n" style="color:${tot > 100 ? KO : OK}">${eur(tot)}</div><p class="mut">consumati in più di quanto giustificano le vendite (spreco, porzioni abbondanti, omaggi, ammanchi)</p></div>
     <div class="card"><h2>Come leggerlo</h2><p class="mut" style="line-height:1.6;margin:0">Consumo reale = inventario iniziale + acquisti − inventario finale.<br>Consumo teorico = pizze e piatti venduti × ricetta.<br>
     Barra rossa a destra = consumato più del teorico oltre il ${pct(soglia)} di tolleranza. Un piccolo scostamento è normale (errori di conta).</p></div></div>

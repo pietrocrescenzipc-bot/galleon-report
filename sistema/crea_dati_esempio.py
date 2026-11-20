@@ -31,6 +31,12 @@ ARTICOLI = {
     "C03": ("Fish & chips", "Cucina", "Cucina", 14.0, 3), "C04": ("Insalatona", "Cucina", "Cucina", 9.0, 4),
 }
 # ingrediente: (unità, costo di riferimento, fornitore, descrizione in fattura, unità fornitore, fattore conversione)
+# Analisi ABC: A = conta settimanale, B = mensile, C = non si conta
+CLASSE = {"farina": "A", "mozzarella": "A", "pomodoro": "A", "carne_burger": "A", "bufala": "A", "patatine": "A",
+          "salame_piccante": "B", "prosciutto_cotto": "B", "gorgonzola": "B", "fontina": "B", "parmigiano": "B",
+          "crema_tartufo": "B", "verdure_grigliate": "B", "olio": "B", "merluzzo": "B", "pane_burger": "B",
+          "birra_spina": "B", "birra_bottiglia": "B", "coca": "B"}
+
 ING = {
     "farina": ("kg", 0.90, "A", "FARINA TIPO 00 SACCO 25KG", "SC", 25),
     "mozzarella": ("kg", 6.50, "B", "MOZZARELLA FIORDILATTE FILONE", "KG", 1),
@@ -109,8 +115,8 @@ def main():
         [[c, d, cat, g, 10] for c, (d, cat, g, p, n) in ARTICOLI.items()])
     csv(A / "ricette.csv", ["codice", "ingrediente", "quantita"],
         [[c, i, float(q)] for c, r in RICETTE.items() for i, q in r.items()])
-    csv(A / "ingredienti.csv", ["ingrediente", "unita", "costo_unitario_default"],
-        [[i, u, float(c)] for i, (u, c, *_) in ING.items()])
+    csv(A / "ingredienti.csv", ["ingrediente", "unita", "costo_unitario_default", "classe"],
+        [[i, u, float(c), CLASSE.get(i, "C")] for i, (u, c, *_) in ING.items()])
     mappa = [[FORNITORI[f][0], desc.split(" ")[0] + " " + desc.split(" ")[1], i, float(fatt),
               "merci_beverage" if f == "C" else "merci_food"] for i, (u, c, f, desc, um, fatt) in ING.items()]
     mappa += [["*", "ENERGIA", "", "", "utenze"], ["*", "GAS NATURALE", "", "", "utenze"],
@@ -128,6 +134,7 @@ def main():
         for ing, x in RICETTE[c].items():
             scorta[ing] += media * 1.1 * 8 * x * SPRECO.get(ing, 1.0)
     magazzino = dict(scorta)  # magazzino reale, parte pieno
+    conte = {}
     inventari = {INIZIO: [[i, round(q, 2)] for i, q in magazzino.items()]}
     g = INIZIO
     while g <= FINE:
@@ -181,6 +188,8 @@ def main():
                         FORNITORI["A"][1], "Energia Italia Spa").replace(FORNITORI["A"][0], "09999999999"), encoding="utf-8")
                 n_fatt += 1
         g += timedelta(days=1)
+        if g.weekday() == 0 and g.day != 1:  # conta settimanale del lunedì, solo classe A
+            conte[g] = [[i, round(magazzino[i] * random.uniform(.98, 1.02), 2)] for i in CLASSE if CLASSE[i] == "A"]
         if g.day == 1:  # inventario di inizio mese = magazzino reale (con piccoli errori di conta)
             inventari[g] = [[i, round(q * random.uniform(.98, 1.02), 2)] for i, q in magazzino.items()]
 
@@ -190,6 +199,8 @@ def main():
     # ---------- inventari di inizio mese
     for giorno, righe in inventari.items():
         csv(I / "inventari" / f"inventario_{giorno}.csv", ["ingrediente", "quantita"], righe)
+    for giorno, righe in conte.items():
+        csv(I / "conte" / f"conta_{giorno}.csv", ["ingrediente", "quantita"], righe)
     print("Dati di esempio creati. Ora lancia:  python pipeline.py")
 
 

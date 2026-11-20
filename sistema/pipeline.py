@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS vendite  (data TEXT, canale TEXT, codice TEXT, descri
 CREATE TABLE IF NOT EXISTS coperti  (data TEXT, canale TEXT, coperti REAL);
 CREATE TABLE IF NOT EXISTS presenze (data TEXT, dipendente TEXT, ore REAL, reparto TEXT);
 CREATE TABLE IF NOT EXISTS inventari(data TEXT, ingrediente TEXT, quantita REAL);
+CREATE TABLE IF NOT EXISTS conte    (data TEXT, ingrediente TEXT, quantita REAL);
 CREATE TABLE IF NOT EXISTS fatture_righe (piva TEXT, fornitore TEXT, numero TEXT, data TEXT, tipo TEXT,
                                      codice_art TEXT, descrizione TEXT, quantita REAL, um TEXT,
                                      importo REAL, aliquota REAL);
@@ -137,13 +138,13 @@ def importa_csv(con, f, tabella):
     sostituisci(con, tabella, df, ["data"])
 
 
-def importa_inventario(con, f):
+def importa_inventario(con, f, tabella="inventari"):
     m = re.search(r"(\d{4}-\d{2}-\d{2})", f.name)
     if not m:
-        raise ValueError("il nome file deve contenere la data, es. inventario_2026-11-01.csv")
+        raise ValueError(f"il nome file deve contenere la data, es. {tabella[:-1]}a_2026-11-01.csv")
     df = leggi_csv(f)[["ingrediente", "quantita"]].copy()
     df.insert(0, "data", m.group(1))
-    sostituisci(con, "inventari", df, ["data"])
+    sostituisci(con, tabella, df, ["data"])
 
 
 def estrai_xml(raw: bytes) -> bytes:
@@ -198,6 +199,7 @@ IMPORTATORI = [
     ("fatture", "*.p7m", importa_fattura),
     ("presenze", "*.csv", lambda con, f: importa_csv(con, f, "presenze")),
     ("inventari", "*.csv", importa_inventario),
+    ("conte", "*.csv", lambda con, f: importa_inventario(con, f, "conte")),  # conta settimanale classe A
 ]
 
 
@@ -232,7 +234,7 @@ def importa_tutto(con):
 # --------------------------------------------------------------------------
 def carica(con):
     D = {t: pd.read_sql(f"SELECT * FROM {t}", con)
-         for t in ["vendite", "coperti", "fatture_righe", "presenze", "inventari"]}
+         for t in ["vendite", "coperti", "fatture_righe", "presenze", "inventari", "conte"]}
     for df in D.values():
         df["data"] = pd.to_datetime(df["data"])
     A = {n: leggi_csv(ANAG / f"{n}.csv")
@@ -393,6 +395,31 @@ def consumi_sprechi(v, acq, inv, ricette, costi, oggi):
     df = df.sort_values("valore_differenza", ascending=False)
     periodo = f"{pd.Timestamp(d0):%d/%m/%Y} - {pd.Timestamp(d1) - pd.Timedelta(days=1):%d/%m/%Y} ({metodo})"
     return df, periodo
+
+
+def controllo_settimanale(v, acq, inv, conte, ricette, costi, oggi):
+    """Stesso calcolo teorico/reale, ma solo sugli ingredienti di CLASSE A e tra le ultime due conte
+    settimanali (vale anche l'inventario mensile come punto di partenza/arrivo)."""
+    if conte.empty:
+        return None
+    classe_a = list(costi.index[costi["classe"].astype(str).str.upper().eq("A")]) if "classe" in costi \
+        else list(conte.ingrediente.unique())
+    tutte = pd.concat([inv, conte]).drop_duplicates(["data", "ingrediente"], keep="last")
+    tutte = tutte[tutte.ingrediente.isin(classe_a)]
+    if tutte.data.nunique() < 2:
+        return None
+    ult = sorted(tutte.data.unique())[-2:]  # solo ingredienti contati in entrambe le date
+    presenti = set(tutte[tutte.data == ult[0]].ingrediente) & set(tutte[tutte.data == ult[1]].ingrediente)
+    df, periodo = consumi_sprechi(v, acq, tutte[tutte.ingrediente.isin(presenti)], ricette, costi, oggi)
+    df = df[df.index.isin(presenti)]
+    # storico: euro consumati oltre ricetta, settimana per settimana (ultime 8 conte)
+    date = sorted(tutte.data.unique())[-9:]
+    storico = []
+    for d0, d1 in zip(date, date[1:]):
+        x, _ = consumi_sprechi(v, acq, tutte[tutte.data.isin([d0, d1])], ricette, costi, d1)
+        x = x[x.index.isin(classe_a)]
+        storico.append(dict(da=f"{pd.Timestamp(d0):%Y-%m-%d}", eccesso=float(x.valore_differenza.clip(lower=0).sum())))
+    return df[df.index.isin(classe_a)], periodo.replace("gli ultimi due inventari", "le ultime due conte"), storico
 
 
 GIORNI = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"]
@@ -727,13 +754,18 @@ def esporta_app(R):
               for r in me.itertuples()],
         consumi=dict(periodo=periodo, righe=[dict(ingrediente=i, unita=r.unita, teorico=f(r.teorico), reale=f(r.reale),
                      diff=f(r.differenza), pct=f(r.scostamento_pct), valore=f(r.valore_differenza)) for i, r in cs.iterrows()]),
+        settimanale=None if R["settimanale"] is None else dict(periodo=R["settimanale"][1], storico=R["settimanale"][2], righe=[
+            dict(ingrediente=i, unita=r.unita, teorico=f(r.teorico), reale=f(r.reale), diff=f(r.differenza),
+                 pct=f(r.scostamento_pct), valore=f(r.valore_differenza)) for i, r in R["settimanale"][0].iterrows()]),
+        classi={i: str(c).upper() for i, c in R["costi"]["classe"].items()} if "classe" in R["costi"] else {},
         qualita=R["qualita"])
     out = REPORT / "app"
     out.mkdir(exist_ok=True)
     (out / "dati.js").write_text("window.GALLEON = " + json.dumps(dati, ensure_ascii=False) + ";", encoding="utf-8")
-    sorgente = BASE / "app" / "index.html"
-    if sorgente.exists():
-        shutil.copy(sorgente, out / "index.html")
+    for nome in ("index.html", "conta.html"):
+        sorgente = BASE / "app" / nome
+        if sorgente.exists():
+            shutil.copy(sorgente, out / nome)
 
 
 # --------------------------------------------------------------------------
@@ -741,7 +773,7 @@ def esporta_app(R):
 # --------------------------------------------------------------------------
 def analizza(con):
     D, A = carica(con)
-    v, cop, pres, inv = D["vendite"], D["coperti"], D["presenze"], D["inventari"]
+    v, cop, pres, inv, conte = D["vendite"], D["coperti"], D["presenze"], D["inventari"], D["conte"]
     if v.empty:
         raise SystemExit("Nessuna vendita nel database: metti i file in dati/inbox/cassa e rilancia.")
     oggi = v.data.max()  # ultimo giorno con chiusura disponibile
@@ -801,6 +833,7 @@ def analizza(con):
 
     me = menu_engineering(v, cp, art, oggi)
     consumi = consumi_sprechi(v, acq, inv, ric, costi, oggi)
+    settimanale = controllo_settimanale(v, acq, inv, conte, ric, costi, oggi)
 
     # ---- avvisi (ordinati: prima i più gravi)
     avvisi = []
@@ -818,6 +851,10 @@ def analizza(con):
     cs = consumi[0]
     for ing, rr in cs[(cs.scostamento_pct > OBIETTIVI["scostamento_consumi_max"]) & (cs.valore_differenza > 20)].head(5).iterrows():
         avvisi.append(("alto", f"{ing}: consumato {pct(rr.scostamento_pct)} in più del teorico (≈ {eur(rr.valore_differenza)} nel periodo)."))
+    if settimanale is not None:
+        ss = settimanale[0]
+        for ing, rr in ss[(ss.scostamento_pct > OBIETTIVI["scostamento_consumi_max"]) & (ss.valore_differenza > 10)].iterrows():
+            avvisi.append(("alto", f"Settimana: {ing} {pct(rr.scostamento_pct)} oltre la ricetta (≈ {eur(rr.valore_differenza)})."))
     for _, rr in me[me.food_cost_pct > OBIETTIVI["food_cost_max"] + 0.05].iterrows():
         avvisi.append(("", f"{rr.descrizione}: food cost {pct(rr.food_cost_pct)} - valuta prezzo/ricetta."))
     for _, rr in costi[(costi.fonte_costo == "fatture") &
@@ -847,13 +884,17 @@ def analizza(con):
         qualita.append("Nessun inventario caricato: food cost effettivo e sprechi sono stime basate solo sugli acquisti.")
     elif (oggi - inv.data.max()).days > 35:
         qualita.append(f"Ultimo inventario del {inv.data.max():%d/%m/%Y}: fanne uno a inizio mese.")
+    if conte.empty:
+        qualita.append("Nessuna conta settimanale: fai la conta degli ingredienti di classe A (pagina conta.html).")
+    elif (oggi - conte.data.max()).days > 9:
+        qualita.append(f"Ultima conta settimanale del {conte.data.max():%d/%m/%Y}: falla ogni settimana, stesso giorno.")
     scarti = list(SCARTI.rglob("*.*"))
     if scarti:
         qualita.append(f"{len(scarti)} file in dati/scarti non importati (motivo in log/pipeline.log).")
 
     return dict(ultimo_giorno=oggi, kpi=kpi, bussola=bussola, serie_giorni=serie_giorni,
                 serie_settimane=serie_settimane, ce=ce, giorni=pd.DataFrame(giorni), me=me, consumi=consumi,
-                costi=costi, avvisi=sorted(avvisi, key=lambda a: a[0] != "alto"), qualita=qualita,
+                settimanale=settimanale, costi=costi, avvisi=sorted(avvisi, key=lambda a: a[0] != "alto"), qualita=qualita,
                 non_classificati=nc[["data", "fornitore", "piva", "numero", "descrizione", "quantita", "importo"]])
 
 

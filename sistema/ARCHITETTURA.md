@@ -25,6 +25,7 @@ I file importati finiscono in `dati/archivio`; quelli illeggibili in `dati/scart
 | `dati/inbox/fatture` | fatture passive FatturaPA `.xml` / `.xml.p7m` | Zucchetti/SDI (automatico) |
 | `dati/inbox/presenze` | `presenze_*.csv` | In&Out (automatico) |
 | `dati/inbox/inventari` | `inventario_AAAA-MM-GG.csv` | **a mano, 1 volta al mese** |
+| `dati/inbox/conte` | `conta_AAAA-MM-GG.csv` (solo ingredienti classe A) | **dal telefono con `conta.html`, 1 volta a settimana** |
 | `anagrafiche/` | articoli, ricette, ingredienti, mappa acquisti, personale, costi fissi | a mano, solo quando cambia qualcosa |
 | `report/` | report pronti + `storico/` | automatico |
 
@@ -42,7 +43,7 @@ Se gli export reali hanno un formato diverso, si aggiunge un piccolo *adattatore
 
 - `articoli.csv`: codice cassa → gruppo per il menu engineering (Pizze, Bevande, Cucina…), aliquota IVA
 - `ricette.csv`: codice cassa → ingrediente + quantità per porzione (distinta base)
-- `ingredienti.csv`: unità di misura + costo di riferimento (usato se mancano le fatture)
+- `ingredienti.csv`: unità di misura + costo di riferimento (usato se mancano le fatture) + **classe** ABC: `A` = conta settimanale, `B` = mensile, `C` = non si conta
 - `mappa_acquisti.csv`: P.IVA fornitore + testo contenuto nella descrizione della riga → ingrediente, **fattore** di conversione (es. sacco 25 kg → 25) e categoria di costo (`merci_food`, `merci_beverage`, `utenze`, `affitto`…)
 - `personale.csv`: costo orario aziendale per dipendente (lordo + contributi + TFR + ratei)
 - `costi_fissi.csv`: costi mensili che non arrivano da fattura
@@ -55,6 +56,7 @@ Se gli export reali hanno un formato diverso, si aggiunge un piccolo *adattatore
 | Costo ingredienti | ricalcolato ogni notte (media degli acquisti degli ultimi 30 giorni) |
 | Menu engineering | ogni notte, sugli ultimi 30 giorni |
 | Conto economico definitivo e controllo sprechi | mensile, dopo l'inventario del giorno 1 |
+| Controllo sprechi classe A (mozzarella, farina, pomodoro, carne…) | settimanale, dopo ogni conta |
 
 ## 6. Cosa contiene il report
 
@@ -62,7 +64,7 @@ Se gli export reali hanno un formato diverso, si aggiunge un piccolo *adattatore
 2. **KPI**: ricavi netti, coperti, scontrino medio, ricavo per ora lavorata, costo lavoro %, food cost %
 3. **Conto economico gestionale mensile**: ricavi → costo merci (con variazione rimanenze) → margine → personale → altri costi → risultato, con incidenze e **ricavi di pareggio**
 4. **Menu engineering** (Kasavana-Smith, per gruppo): Star / Plowhorse / Puzzle / Dog, con l'azione consigliata
-5. **Consumi e sprechi**: consumo reale (inventari + acquisti) confrontato con il consumo teorico (vendite × ricette), per ingrediente e in €
+5. **Consumi e sprechi**: consumo reale (inventari + acquisti) confrontato con il consumo teorico (vendite × ricette), per ingrediente e in €. In cima la **settimana** sugli ingredienti di classe A, con l'andamento delle ultime 8 conte
 6. **Qualità dei dati**: righe di fattura non classificate, articoli senza ricetta, serate senza presenze, file scartati
 
 ## 7. Installazione su Windows
