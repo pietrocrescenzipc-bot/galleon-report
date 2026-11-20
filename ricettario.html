@@ -308,16 +308,23 @@ function rinominaCat() { const n = prompt("Nuovo nome", S.cats[catSel].nome); if
 function eliminaCat() { if (confirm(`Elimino la categoria "${S.cats[catSel].nome}" con tutti i prodotti?`)) { S.cats.splice(catSel, 1); catSel = 0; salva(); mostra(); } }
 
 /* ===== VISTA INGREDIENTI ===== */
+let filtroIng = "tutti";
+const tipoFonte = g => g.costo == null ? "manca" : /^fattur/.test(g.fonte || "") ? "fattura" : "manuale";
 function vistaIngredienti() {
   const uso = {}; S.cats.forEach(c => c.prodotti.forEach(p => p.ing.forEach(r => uso[r.n] = (uso[r.n] || 0) + 1)));
-  const nomi = Object.keys(S.ingr).sort((a, b) => (S.ingr[a].classe + a).localeCompare(S.ingr[b].classe + b));
+  const tutti = Object.keys(S.ingr), conta = t => tutti.filter(n => tipoFonte(S.ingr[n]) === t).length;
+  const nomi = tutti.filter(n => filtroIng === "tutti" || tipoFonte(S.ingr[n]) === filtroIng)
+    .sort((a, b) => (S.ingr[a].classe + a).localeCompare(S.ingr[b].classe + b));
+  const chip = (id, t, col) => `<button class="${filtroIng === id ? "on" : ""}" onclick="filtroIng='${id}';mostra()">${t}</button>`;
   return `<div class="card"><h2>Ingredienti</h2><p class="mut">Inserisci il <b>costo d'acquisto</b> per unità (€/kg, €/l o €/pezzo) dalle vostre fatture: serve per food cost e scarto in euro.
     Classe A = conta settimanale, B = mensile, C = non si conta. Rinominare un ingrediente lo aggiorna in tutte le ricette.</p>
+   <div class="chips">${chip("tutti", "Tutti " + tutti.length)}${chip("manca", "🟡 Senza costo " + conta("manca"))}${chip("fattura", "🟢 Da fattura " + conta("fattura"))}${chip("manuale", "✏️ Inseriti a mano " + conta("manuale"))}</div>
    <table class="tabi"><tr><th>Ingrediente</th><th>Unità</th><th>Classe</th><th class="n">Costo €</th><th class="n">Uso</th><th></th></tr>
    ${nomi.map(n => { const g = S.ingr[n]; return `<tr><td><input value="${n}" onchange="rinominaIng('${n}',this.value)" style="width:100%"></td>
      <td><select onchange="S.ingr['${n}'].u=this.value;salva()">${["kg", "l", "pz"].map(u => `<option ${u === g.u ? "selected" : ""}>${u}</option>`).join("")}</select></td>
      <td><select onchange="S.ingr['${n}'].classe=this.value;salva();mostra()">${["A", "B", "C"].map(u => `<option ${u === g.classe ? "selected" : ""}>${u}</option>`).join("")}</select></td>
-     <td class="n"><input style="width:80px;text-align:right" inputmode="decimal" placeholder="€ costo" value="${g.costo ?? ""}" onchange="S.ingr['${n}'].costo=this.value===''?null:num(this.value);salva()"></td>
+     <td class="n"><input style="width:80px;text-align:right;${g.costo == null ? "border-color:var(--warn);background:#fffbea" : ""}" inputmode="decimal" placeholder="€ costo" value="${g.costo ?? ""}" onchange="S.ingr['${n}'].costo=this.value===''?null:num(this.value);S.ingr['${n}'].fonte='a mano '+new Date().toLocaleDateString('it-IT');salva();mostra()">
+     <br><small class="mut">${{manca: "🟡 manca", fattura: "🟢 " + esc(S.ingr[n].fonte), manuale: "✏️ " + esc(S.ingr[n].fonte || "a mano")}[tipoFonte(g)]}</small></td>
      <td class="n mut">usato in ${uso[n] || 0}</td><td>${uso[n] ? "" : `<button class="x" onclick="delete S.ingr['${n}'];salva();mostra()">×</button>`}</td></tr>`; }).join("")}</table></div>`;
 }
 function rinominaIng(vecchio, nuovo) {
@@ -472,7 +479,7 @@ function fattore(desc, um, n) {
 function gruppiFatture() {
   S.mappa = S.mappa || {};
   const g = {};
-  FAT.righe.forEach(r => { const k = norm(r.desc); (g[k] = g[k] || {k, desc: r.desc, forn: r.forn, um: r.um, q: 0, eur: 0}); g[k].q += r.q; g[k].eur += r.eur; });
+  FAT.righe.forEach(r => { const k = norm(r.desc); (g[k] = g[k] || {k, desc: r.desc, forn: r.forn, um: r.um, q: 0, eur: 0, data: ""}); if (r.data > g[k].data) g[k].data = r.data.split("-").reverse().join("/"); g[k].q += r.q; g[k].eur += r.eur; });
   return Object.values(g).sort((a, b) => b.eur - a.eur).map(x => { const m = S.mappa[x.k] || {}; const n = m.n ?? indovina(x.desc);
     return {...x, n, f: m.f ?? (n ? fattore(x.desc, x.um, n) : 1)}; });
 }
@@ -498,8 +505,8 @@ function acquistiDaFatture() {
   const o = {}; gruppiFatture().forEach(x => { if (x.n) o[x.n] = (o[x.n] || 0) + x.q * x.f; }); return o;
 }
 function applicaCosti() {
-  const agg = {}; gruppiFatture().forEach(x => { if (!x.n) return; S.mappa[x.k] = {n: x.n, f: x.f}; const a = agg[x.n] = agg[x.n] || {e: 0, q: 0}; a.e += x.eur; a.q += x.q * x.f; });
-  const fatti = Object.entries(agg).filter(([, a]) => a.q > 0).map(([n, a]) => { S.ingr[n].costo = Math.round(a.e / a.q * 1000) / 1000; return `${n.replace(/_/g, " ")}: ${eur(S.ingr[n].costo)}/${S.ingr[n].u}`; });
+  const agg = {}; gruppiFatture().forEach(x => { if (!x.n) return; S.mappa[x.k] = {n: x.n, f: x.f}; const a = agg[x.n] = agg[x.n] || {e: 0, q: 0, forn: "", data: ""}; a.e += x.eur; a.q += x.q * x.f; a.forn = x.forn.split(" ")[0]; a.data = x.data || a.data; });
+  const fatti = Object.entries(agg).filter(([, a]) => a.q > 0).map(([n, a]) => { S.ingr[n].costo = Math.round(a.e / a.q * 1000) / 1000; S.ingr[n].fonte = "fattura " + a.forn + " " + a.data; return `${n.replace(/_/g, " ")}: ${eur(S.ingr[n].costo)}/${S.ingr[n].u}`; });
   salva(); alert(fatti.length ? "Costi aggiornati:\n" + fatti.join("\n") : "Nessun ingrediente collegato."); mostra();
 }
 function selCol(id, campo, facolt) {
@@ -677,7 +684,7 @@ function mostra(tieniFocus) {
   $("main").innerHTML = VISTE.find(v => v[0] === vista)[2]();
   if (pos != null) { const c = $("cerca"); c.focus(); c.setSelectionRange(pos, pos); }
 }
-for (const [n, c] of Object.entries(COSTI_FATTURE)) if (S.ingr[n] && S.ingr[n].costo == null) S.ingr[n].costo = c; // non tocca i costi già inseriti
+for (const [n, c] of Object.entries(COSTI_FATTURE)) if (S.ingr[n] && S.ingr[n].costo == null) { S.ingr[n].costo = c; S.ingr[n].fonte = "fatture ago–nov 2026"; } // non tocca i costi già inseriti
 salva();
 mostra();
 </script>
