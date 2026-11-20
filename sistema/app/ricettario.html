@@ -134,7 +134,7 @@ Piadina con Sella|9|sella_san_venanzo,pecorino
 Spugna|8.5|mozzarella,salsiccia,funghi,salsa_tartufata
 Tacchino|8|tacchino,rucola,pachino,mozzarella,salsa_tonnata
 Vegetariana|7|mozzarella,verdure_grigliate`},
-"Hot dog": {base: "pane_hotdog,wurstel", p: `Tedesco|8|cipolla_caramellata,crauti,ketchup,maionese,emmental,cipolla_fritta
+"Hot dog": {base: "pane_hotdog,wurstel_90", p: `Tedesco|8|cipolla_caramellata,crauti,ketchup,maionese,emmental,cipolla_fritta
 A Gonfie Vele|7|ketchup,maionese,patatine
 In Secca|7|salame_piccante,ketchup,mozzarella,patatine`},
 "Friggitoria": {base: "", p: `Jalapeños verdi al cheddar (5 pz)|6|jalapeno_cheddar:5
@@ -151,7 +151,7 @@ Mix Piccante|10|jalapeno_rossi:2,alette_pollo:2,anelli_cipolla,patatine_chips
 Mozzarelline (7 pz)|5|mozzarelline:7
 Olive ascolane (7 pz)|5|olive_ascolane:7
 Patate dippers|5|patate_dippers
-Patate & Wurstel|6|patatine,wurstel
+Patate & Wurstel|6|patatine,wurstel_90
 Patatine|5|patatine
 Patatine chips|5|patatine_chips
 Supplì|2|suppli
@@ -195,7 +195,7 @@ Traminer Aromatico 0,75|15|traminer_075`},
 "Caffè": {base: "", p: `Caffè espresso|1.5|caffe:7`}
 };
 // ingredienti contati a pezzi (quantità in ricetta = numero di pezzi)
-const PZ = /^(impasto|impasto_pala|impasto_torta|piadina|pane_.*|uovo|torta_testo|carne_.*|hamburger_pollo_150|cotoletta_pollo|petto_pollo|burrata|wurstel|bufala|jalapeno_.*|fiori_zucca|alette_pollo|chele_granchio|crocchette|roll_piccanti|polpette_cheddar|corn_hog|olive_ascolane|mozzarelline|suppli|cheesecake|semifreddo_.*|crema_catalana|panna_cotta|tartufo_gelato|tiramisu|tortino_cioccolato|acqua_.*|coca_033|fanta_033|sprite_033|the_bottiglia|engel_radler|birra_gluten_free|tennents_super|refosco_.*|ribolla_.*|sauvignon_.*|traminer_.*)$/;
+const PZ = /^(impasto|impasto_pala|impasto_torta|piadina|pane_.*|uovo|torta_testo|carne_.*|hamburger_pollo_150|cotoletta_pollo|petto_pollo|burrata|wurstel_90|bufala|jalapeno_.*|fiori_zucca|alette_pollo|chele_granchio|crocchette|roll_piccanti|polpette_cheddar|corn_hog|olive_ascolane|mozzarelline|suppli|cheesecake|semifreddo_.*|crema_catalana|panna_cotta|tartufo_gelato|tiramisu|tortino_cioccolato|acqua_.*|coca_033|fanta_033|sprite_033|the_bottiglia|engel_radler|birra_gluten_free|tennents_super|refosco_.*|ribolla_.*|sauvignon_.*|traminer_.*)$/;
 const LITRI = /^(spina_.*|prosecco)$/;
 const CLASSE_A = /^(spina_.*|mozzarella|impasto|impasto_pala|pomodoro|carne_.*|hamburger_pollo_150|salsiccia|prosciutto_crudo|bufala|stracciatella|burrata|patatine)$/;
 const CLASSE_B = /^(bacon|cheddar|salame_piccante|speck|prosciutto_cotto|bresaola|mortadella.*|lardo|salmone|gamberetti|sella_san_venanzo|gorgonzola|salsa_4_formaggi|provola|funghi|porcini|verdure_grigliate|wurstel|patatine_chips|patate_dippers|mozzarelline|olive_ascolane|crocchette|alette_pollo|chele_granchio|jalapeno_.*|olio|cotoletta_pollo|pane_burger|impasto_torta|piadina|torta_testo|cheesecake|tiramisu|semifreddo_.*|prosecco|acqua_.*|coca_033|fanta_033|sprite_033|the_bottiglia|engel_radler|birra_gluten_free|tennents_super|refosco_.*|ribolla_.*|sauvignon_.*|traminer_.*|caffe)$/;
@@ -420,8 +420,12 @@ async function caricaFatture(files) {
 }
 const INDOVINA = [[/mozz.*(pizz|julienne|fior.?di.?latte|filone|cubo)|fior.?di.?latte/, "mozzarella"], [/bufala/, "bufala"], [/stracciatella/, "stracciatella"], [/burrata/, "burrata"],
   [/gorgonzola/, "gorgonzola"], [/provola/, "provola"], [/stracchino/, "stracchino"], [/scamorza/, "scamorza"], [/pecorino/, "pecorino"], [/grana|parmigian/, "grana"], [/emmental/, "emmental"], [/cheddar/, "cheddar"],
-  [/polpa|pelat|passata|pomodoro.*(latta|kg)/, "pomodoro"], [/pachino|ciliegin/, "pachino"], [/salsiccia/, "salsiccia"], [/crudo/, "prosciutto_crudo"], [/cotto/, "prosciutto_cotto"], [/speck/, "speck"],
-  [/bresaola/, "bresaola"], [/salame|spianata/, "salame_piccante"], [/mortadella/, "mortadella"], [/bacon|pancetta/, "bacon"], [/wurstel/, "wurstel"], [/funghi|champignon/, "funghi"],
+  [/macinat.*chianina|chianina/, "carne_chianina_220"], [/hamburger.*angus|black.?angus/, "carne_angus_220"], [/scottona/, "carne_scottona_220"],
+  [/fass/, "carne_fassona_200"], [/macinat/, "carne_manzo_150"], [/hamburger.*pollo/, "hamburger_pollo_150"], [/milanese|cotolett/, "cotoletta_pollo"], [/tacchino/, "tacchino"],
+  [/uova|uovo/, "uovo"], [/nduja/, "crema_nduja"], [/sella/, "sella_san_venanzo"], [/lardo/, "lardo"], [/mortadella.*pist|pist.*mortadella/, "mortadella_pistacchio"],
+  [/coscia.*stag|prosc.*crudo|crudo/, "prosciutto_crudo"], [/pancetta/, "pancetta"], [/capocollo|salame toscano|lonza/, "affettati_misti"],
+  [/polpa|pelat|passata|pomodoro.*(latta|kg)/, "pomodoro"], [/pachino|ciliegin/, "pachino"], [/salsicc/, "salsiccia"], [/cotto/, "prosciutto_cotto"], [/speck/, "speck"],
+  [/bresaola/, "bresaola"], [/salame|spianata/, "salame_piccante"], [/mortadella/, "mortadella"], [/bacon/, "bacon"], [/wurstel/, "wurstel_90"], [/funghi|champignon/, "funghi"],
   [/patat.*(stick|fritt|surgel|julienne)|french.?fries/, "patatine"], [/rucola/, "rucola"], [/olio.*(extra|evo)/, "olio"]];
 function indovina(desc) {
   const d = desc.toLowerCase(); for (const [rx, n] of INDOVINA) if (rx.test(d) && S.ingr[n]) return n; return "";
@@ -432,6 +436,12 @@ function fattore(desc, um, n) {
   if (u === "kg") { if (um === "KG") return 1; let m = d.match(/KG\.?\s*(\d+(\.\d+)?)/) || d.match(/(\d+(\.\d+)?)\s*KG/); if (m) return +m[1];
     m = d.match(/GR?\.?\s*(\d+)/) || d.match(/(\d+)\s*GR?\b/); if (m) return +m[1] / 1000; return 1; }
   if (u === "l") { if (/^(L|LT|LITRI)$/.test(um)) return 1; let m = d.match(/(\d+)\s*ML/); if (m) return +m[1] / 1000; m = d.match(/(\d+(\.\d+)?)\s*(LT|L)\b/); if (m) return +m[1]; return 1; }
+  const pz = d.match(/(?:^|[^.\d])(\d{2,3})\s*G\b/); // peso del singolo pezzo scritto in fattura (es. HAMBURGER 200G)
+  if (u === "pz" && um === "KG" && pz) return Math.round(1000 / +pz[1] * 1000) / 1000;
+  const g = n.match(/_(\d{2,4})$/); // pezzo di peso noto (es. carne_chianina_220 = 220 g)
+  if (u === "pz" && g) { let kg = um === "KG" ? 1 : null; if (kg == null) { let m = d.match(/KG\.?\s*(\d+(\.\d+)?)/) || d.match(/(\d+(\.\d+)?)\s*KG/); if (m) kg = +m[1];
+      else { m = d.match(/GR?\.?\s*(\d+)/) || d.match(/(\d+)\s*GR?\b/); if (m) kg = +m[1] / 1000; } }
+    if (kg) return Math.round(kg * 1000 / +g[1] * 1000) / 1000; }
   return 1;
 }
 function gruppiFatture() {
