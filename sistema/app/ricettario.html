@@ -400,7 +400,7 @@ const senzaAllegati = x => x.replace(/<([\w-]+:)?Attachment>[\s\S]*?<\/([\w-]+:)
 function estraiXml(u8) { return senzaAllegati(estraiXml0(u8)); }
 function estraiXml0(u8) {
   let t = latin(u8.subarray(0, 300));
-  if (t.trimStart().startsWith("<")) return new TextDecoder("utf-8").decode(u8);
+  if (t.replace(/^\xef\xbb\xbf/, "").trimStart().startsWith("<")) return new TextDecoder("utf-8").decode(u8).replace(/^\ufeff/, "");
   let bin = u8;
   if (u8[0] !== 0x30) { try { bin = daLatin(atob(latin(u8).replace(/[^A-Za-z0-9+/=]/g, ""))); } catch (e) {} }
   if (!latin(bin.subarray(0, 60)).includes("\xef\xbf\xbd")) try { const m = latin(berOctets(bin)).match(RX_FE); if (m) return new TextDecoder("utf-8").decode(daLatin(m[0])); } catch (e) {}

@@ -180,8 +180,8 @@ def _ber_octets(b: bytes) -> bytes:
 
 def estrai_xml(raw: bytes) -> bytes:
     """Restituisce l'XML della FatturaPA. Gestisce .xml, .p7m firmati (anche in base64)."""
-    if raw.lstrip()[:1] == b"<":
-        return raw
+    if raw.lstrip(b"\xef\xbb\xbf \t\r\n")[:1] == b"<":  # anche con BOM UTF-8 iniziale
+        return raw.lstrip(b"\xef\xbb\xbf \t\r\n")
     trova = lambda x: re.search(rb"(<\?xml.*?)?<([\w-]+:)?FatturaElettronica[\s>].*?</([\w-]+:)?FatturaElettronica>", x, re.S)
     try:
         if b"\xef\xbf\xbd" in raw[:60]:
