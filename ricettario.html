@@ -348,6 +348,7 @@ function vistaImporta() {
     <p class="mut">Carica le fatture scaricate da Fatture e Corrispettivi (anche lo ZIP del download massivo) o da Zucchetti. Per ogni prodotto scegli l'ingrediente e il <b>fattore</b>
     (quanti kg/l/pezzi dell'ingrediente ci sono in 1 unità della fattura, es. cubo da 3 kg → 3). La scelta viene ricordata per le prossime volte.</p>
     <input type="file" multiple accept=".xml,.p7m,.zip" onchange="caricaFatture(this.files)"> ${FAT.righe.length ? `<span class="mut">${FAT.file} file · ${FAT.righe.length} righe · ${eur(FAT.righe.reduce((a, r) => a + r.eur, 0))} imponibile</span>` : ""}
+    ${FAT.escluse ? `<p class="mut">${eur(FAT.escluse)} di carte prepagate/buoni esclusi: non sono acquisti di merce (chiedi al commercialista come registrarli).</p>` : ""}
     ${FAT.doppie ? `<p class="mut">${FAT.doppie} fatture caricate due volte: contate una volta sola.</p>` : ""}
     ${FAT.errori.length ? `<p class="warn">Non letti: ${FAT.errori.map(esc).join(", ")}</p>` : ""}
     ${tabellaFatture()}</div>
@@ -402,13 +403,14 @@ function leggiFattura(xml, nomeFile) {
     const data = tx(uno(body, "DatiGeneraliDocumento"), "Data"), tipo = tx(body, "TipoDocumento"), segno = tipo === "TD04" ? -1 : 1;
     tutti(body, "DettaglioLinee").forEach(l => {
       const eurv = +tx(l, "PrezzoTotale") * segno; if (!eurv) return;
+      if (/prepagat|gift.?card|carta regalo|buono acquisto/i.test(tx(l, "Descrizione"))) { FAT.escluse = (FAT.escluse || 0) + eurv; return; } // non è un costo merce
       out.push({forn, data, desc: tx(l, "Descrizione").replace(/\s+/g, " "), q: +(tx(l, "Quantita") || 1) * segno, um: tx(l, "UnitaMisura").toUpperCase(), eur: eurv, file: nomeFile});
     });
   });
   return out;
 }
 async function caricaFatture(files) {
-  FAT.righe = []; FAT.file = 0; FAT.errori = []; FAT.viste = new Set(); FAT.doppie = 0;
+  FAT.righe = []; FAT.file = 0; FAT.errori = []; FAT.viste = new Set(); FAT.doppie = 0; FAT.escluse = 0;
   const elenco = [];
   for (const f of files) {
     const u8 = new Uint8Array(await f.arrayBuffer());
