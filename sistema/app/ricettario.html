@@ -443,31 +443,35 @@ async function caricaFatture(files) {
 }
 const INDOVINA = [[/dippers/, "patate_dippers"], [/chips/, "patatine_chips"], [/patate.*(9x9|regular|stick|fritt|surgel)|^patatine/, "patatine"],
   [/4 formaggi/, "salsa_4_formaggi"], [/tartufat/, "salsa_tartufata"], [/porcini/, "porcini"], [/jalapen.*ross/, "jalapeno_rossi"], [/jalapen/, "jalapeno_cheddar"],
-  [/chele/, "chele_granchio"], [/mozzarelline/, "mozzarelline"], [/ascolane/, "olive_ascolane"], [/crocchette/, "crocchette"], [/anelli/, "anelli_cipolla"],
+  [/chele/, "chele_granchio"], [/mozzarelline/, "mozzarelline"], [/ascolane/, "olive_ascolane"], [/crocchette/, "crocchette"], [/anelli.*cipoll|cipoll.*anelli/, "anelli_cipolla"],
   [/fiori zucc/, "fiori_zucca"], [/peperoni grigl/, "peperoni"], [/acciughe|alici/, "alici"], [/crema di zucca/, "crema_zucca"], [/pomodori secchi/, "pomodori_secchi"],
-  [/nutella/, "nutella"], [/granella.*pistacch|pistacchi granella/, "granella_pistacchio"], [/noci/, "noci"], [/farina/, "farina"], [/semola/, "semola"],[/special.?brew/, "spina_special_brew"], [/grimbergen/, "spina_grimbergen"], [/tucher/, "spina_tucher"], [/carlsberg.*(pils|fust|\bfs\b|modular)/, "spina_carlsberg"],
+  [/nutella/, "nutella"], [/granella.*pistacch|pistacchi granella/, "granella_pistacchio"], [/\bnoci\b(?!.*moscat)/, "noci"], [/farina/, "farina"], [/semola/, "semola"],[/special.?brew/, "spina_special_brew"], [/grimbergen/, "spina_grimbergen"], [/tucher/, "spina_tucher"], [/carlsberg.*(pils|fust|\bfs\b|modular)/, "spina_carlsberg"],
   [/aperol.*(fust|spina|keg)/, "spina_aperol_spritz"], [/prosecco/, "prosecco"], [/coca.?cola(?!.*zero).*33|coca.*33/, "coca_033"], [/fanta.*33/, "fanta_033"], [/sprite.*33/, "sprite_033"],
-  [/radler/, "engel_radler"], [/esta.?the|\bthe\b.*(pesca|limone)/, "the_bottiglia"], [/tennent/, "tennents_super"], [/gluten/, "birra_gluten_free"], [/(acqua|tullia|panna|s\.?pellegrino|nat|friz).*(100|1l|1 l|lt ?1)/, "acqua_1l"],
-  [/(acqua|tullia).*(50|0[,.]5)/, "acqua_piccola"], [/cauzion/, ""],[/mozz.*(pizz|julienne|fior.?di.?latte|filone|cubo)|fior.?di.?latte/, "mozzarella"], [/bufala/, "bufala"], [/stracciatella/, "stracciatella"], [/burrata/, "burrata"],
+  [/radler/, "engel_radler"], [/esta.?the|\bthe\b.*(pesca|limone)/, "the_bottiglia"], [/tennent/, "tennents_super"], [/gluten/, "birra_gluten_free"], [/\b(acqua|tullia|s\.?pellegrino|levissima)\b.*(100|1l|1 l|lt ?1)/, "acqua_1l"],
+  [/\b(acqua|tullia)\b.*(50|0[,.]5)/, "acqua_piccola"], [/cauzion/, ""],[/mozz.*(pizz|julienne|fior.?di.?latte|filone|cubo)|fior.?di.?latte/, "mozzarella"], [/bufala/, "bufala"], [/stracciatella/, "stracciatella"], [/burrata/, "burrata"],
   [/gorgonzola/, "gorgonzola"], [/provola/, "provola"], [/stracchino/, "stracchino"], [/scamorza/, "scamorza"], [/pecorino/, "pecorino"], [/grana|parmigian/, "grana"], [/emmental/, "emmental"], [/cheddar/, "cheddar"],
   [/macinat.*chianina|chianina/, "carne_chianina_220"], [/hamburger.*angus|black.?angus/, "carne_angus_220"], [/scottona/, "carne_scottona_220"],
-  [/fass/, "carne_fassona_200"], [/macinato\b/, "carne_manzo_150"], [/hamburger.*pollo/, "hamburger_pollo_150"], [/milanese|cotolett/, "cotoletta_pollo"], [/tacchino/, "tacchino"],
+  [/fass/, "carne_fassona_200"], [/macinato\b/, "carne_manzo_150"], [/hamburger.*pollo/, "hamburger_pollo_150"], [/milanese.*pollo|cotolett/, "cotoletta_pollo"], [/tacchino/, "tacchino"],
   [/uova|uovo/, "uovo"], [/gamber/, "gamberetti"], [/alette/, "alette_pollo"], [/nduja/, "crema_nduja"], [/sella/, "sella_san_venanzo"], [/lardo/, "lardo"], [/mortadella.*pist|pist.*mortadella/, "mortadella_pistacchio"],
   [/coscia.*stag|prosc.*crudo|crudo/, "prosciutto_crudo"], [/pancetta/, "pancetta"], [/capocollo|salame toscano|lonza/, "affettati_misti"],
   [/polpa|pelat|passata|pomodoro.*(latta|kg)/, "pomodoro"], [/pachino|ciliegin/, "pachino"], [/salsicc/, "salsiccia"], [/cotto/, "prosciutto_cotto"], [/speck/, "speck"],
-  [/bresaola/, "bresaola"], [/salame|spianata/, "salame_piccante"], [/mortadella/, "mortadella"], [/bacon/, "bacon"], [/wurstel/, "wurstel_90"], [/funghi|champignon/, "funghi"],
-  [/patat.*(stick|fritt|surgel|julienne)|french.?fries/, "patatine"], [/cipolla rossa/, "cipolla_rossa"], [/patate (nuove|fresche|novelle|gialle|rosse)|^patate\b/, "patate"], [/rucola/, "rucola"], [/zucchin/, "zucchine"], [/melanzan/, "melanzane"], [/lattuga|insalata/, "lattuga"], [/sottilett/, "sottiletta"], [/emmental/, "emmental"], [/aperol/, "spina_aperol_spritz"], [/olio.*(extra|evo)/, "olio"]];
+  [/bresaola/, "bresaola"], [/salame|spianata/, "salame_piccante"], [/mortadella/, "mortadella"], [/^(?!.*salsa).*bacon/, "bacon"], [/wurstel/, "wurstel_90"], [/funghi|champignon/, "funghi"],
+  [/patat.*(stick|fritt|surgel|julienne)|french.?fries/, "patatine"], [/cipolla rossa/, "cipolla_rossa"], [/patate (nuove|fresche|novelle|gialle|rosse)|^patate\b/, "patate"], [/rucola/, "rucola"], [/zucchin/, "zucchine"], [/melanzan/, "melanzane"], [/lattuga|insalata/, "lattuga"], [/sottilett/, "sottiletta"], [/emmental/, "emmental"], [/olio.*(extra|evo)/, "olio"]];
+const MAI = /risotto|tramezzin|petfriend|crocchette.*(dog|cane|gatto)|teneroni|arrostic|omaggio|sottobicch|cauzion/;
 function indovina(desc) {
-  const d = desc.toLowerCase(); for (const [rx, n] of INDOVINA) if (rx.test(d) && (n === "" || S.ingr[n])) return n; return "";
+  const d = desc.toLowerCase(); if (MAI.test(d)) return ""; for (const [rx, n] of INDOVINA) if (rx.test(d) && (n === "" || S.ingr[n])) return n; return "";
 }
-function fattore(desc, um, n) {
-  const u = S.ingr[n]?.u, d = desc.toUpperCase().replace(/,/g, ".");
+function fattore(desc, um, n, q) {
+  const u = S.ingr[n]?.u, d = desc.toUpperCase().replace(/,/g, "."), U = (um || "").toUpperCase().replace(/\./g, "");
   if (!u) return 1;
+  const peso = /\d\s*(KG|GR?|ML|LT?|CL)\b|\b(KG|GR?|ML|LT|CL)\.?\s*\d/.test(d), aPezzi = /^(N|NR|PZ|CT|CF|CS|CONF)$/.test(U) || (U === "" && Number.isInteger(q));
+  if (u === "kg" && U !== "KG" && !peso && aPezzi) return 0; // es. rucola a mazzi, confezioni del supermercato senza peso: da inserire a mano
+  if (u === "pz" && U !== "PZ" && !/^(carne_|hamburger_|wurstel_)/.test(n) && !/(?<![\d.])(\d{2,3})\s*G\b/.test(d) && !/(\d{1,3})\s*(BT|PZ|BOTT)\b|\d\s*X\s*\d|\bX\s*\d/.test(d) && (U === "KG" || /\d\s*(KG|GR?)\b|\b(KG|GR?)\.?\s*\d/.test(d))) return 0; // venduto a peso ma la ricetta conta i pezzi: serve il peso del pezzo
   if (u === "kg") { if (um === "KG") return 1; let m = d.match(/KG\.?\s*(\d+(\.\d+)?)/) || d.match(/(\d+(\.\d+)?)\s*KG/); if (m) return +m[1];
     m = d.match(/GR?\.?\s*(\d+)/) || d.match(/(\d+)\s*GR?\b/); if (m) { const x = d.match(/GR?\.?\s*\d+\s*X\s*(\d{1,2})\b/); return +m[1] / 1000 * (x && um !== "KG" ? +x[1] : 1); } return 1; }
   if (u === "l") { if (/^(L|LT|LITRI)$/.test(um)) return 1; let m = d.match(/(\d+)\s*ML/); if (m) return +m[1] / 1000; m = d.match(/(\d+(\.\d+)?)\s*(LT|L)\b/); if (m) return +m[1]; return 1; }
   const conf = d.match(/(\d{1,3})\s*(?:BT|PZ|BOTT)\b/) || d.match(/\d\s*X\s*(\d{1,3})\b/) || d.match(/\bX\s*(\d{1,3})\b/); // confezione da N pezzi (es. 33X24, 100x12)
-  if (u === "pz" && !/^(carne_|hamburger_|wurstel_)/.test(n) && conf && um !== "KG") return +conf[1];
+  if (u === "pz" && U !== "PZ" && !/^(carne_|hamburger_|wurstel_)/.test(n) && conf && um !== "KG") return +conf[1];
   const pz = d.match(/(?:^|[^.\d])(\d{2,3})\s*G\b/); // peso del singolo pezzo scritto in fattura (es. HAMBURGER 200G)
   if (u === "pz" && um === "KG" && pz) return Math.round(1000 / +pz[1] * 1000) / 1000;
   const g = /^(carne_|hamburger_|wurstel_)/.test(n) && n.match(/_(\d{2,4})$/); // pezzo di peso noto (es. carne_chianina_220 = 220 g)
@@ -482,24 +486,24 @@ function gruppiFatture() {
   FAT.righe.forEach(r => { const k = norm(r.desc); const x = (g[k] = g[k] || {k, desc: r.desc, forn: r.forn, um: r.um, q: 0, eur: 0, d0: "9999", d1: ""}); if (r.data > x.d1) x.d1 = r.data; if (r.data < x.d0) x.d0 = r.data; x.q += r.q; x.eur += r.eur; });
   Object.values(g).forEach(x => x.data = x.d1.split("-").reverse().join("/"));
   return Object.values(g).sort((a, b) => b.eur - a.eur).map(x => { const m = S.mappa[x.k] || {}; const n = m.n ?? indovina(x.desc);
-    return {...x, n, f: m.f ?? (n ? fattore(x.desc, x.um, n) : 1)}; });
+    return {...x, n, f: m.f ?? (n ? fattore(x.desc, x.um, n, x.q) : 1)}; });
 }
 function tabellaFatture() {
   if (!FAT.righe.length) return "";
   const G = gruppiFatture(); window._gruppi = G;
   return `<div style="overflow-x:auto"><table class="tabf"><tr><th>Prodotto in fattura</th><th class="n">Quantità</th><th class="n">€ totale</th><th>Ingrediente</th><th class="n">Fattore</th><th class="n">Costo per unità</th></tr>
-   ${G.map((x, i) => { const u = S.ingr[x.n]?.u || ""; const c = x.n && x.f ? x.eur / (x.q * x.f) : null;
+   ${G.map((x, i) => { const u = S.ingr[x.n]?.u || ""; const c = x.n && x.f && x.eur > 0 ? x.eur / (x.q * x.f) : null;
      return `<tr><td>${esc(x.desc)}<br><small class="mut">${esc(x.forn)}</small></td><td class="n">${IT(x.q)} ${esc(x.um)}</td><td class="n">${eur(x.eur)}</td>
      <td><input list="ingrlist" value="${x.n}" placeholder="(ignora)" style="width:150px" onchange="mappa(${i},'n',this.value)"></td>
-     <td class="n"><input style="width:65px;text-align:right" value="${x.n ? IT(x.f, 3) : ""}" onchange="mappa(${i},'f',this.value)"></td>
+     <td class="n"><input style="width:65px;text-align:right${x.n && !x.f ? ";background:#fff3c4" : ""}" placeholder="?" value="${x.n && x.f ? IT(x.f, 3) : ""}" onchange="mappa(${i},'f',this.value)"></td>
      <td class="n"><b>${c == null ? "–" : eur(c) + "/" + u}</b></td></tr>`; }).join("")}</table></div>
    <datalist id="ingrlist">${Object.keys(S.ingr).sort().map(n => `<option value="${n}">`).join("")}</datalist>
-   <p><button class="b p" onclick="applicaCosti()">Applica i costi agli ingredienti</button> <span class="mut">Se lo stesso ingrediente arriva da più fornitori (es. grana da Cooperlat e da Gestimar), vale il fornitore da cui compriamo di più, al prezzo del suo ultimo mese di acquisto.</span></p>`;
+   <p><button class="b p" onclick="applicaCosti()">Applica i costi agli ingredienti</button> <span class="mut">Se lo stesso ingrediente arriva da più fornitori (es. grana da Cooperlat e da Gestimar), vale il fornitore su cui spendiamo di più, al prezzo del suo ultimo mese di acquisto. Riquadro giallo nel Fattore = manca il peso o i pezzi per confezione: scrivilo tu.</span></p>`;
 }
 function mappa(i, campo, v) {
   const x = window._gruppi[i], m = S.mappa[x.k] = S.mappa[x.k] || {n: x.n, f: x.f};
-  if (campo === "n") { const n = norm(v); m.n = n; if (n && !S.ingr[n]) S.ingr[n] = nuovoIng(n); m.f = n ? fattore(x.desc, x.um, n) : 1; }
-  else m.f = num(v) || 1;
+  if (campo === "n") { const n = norm(v); m.n = n; if (n && !S.ingr[n]) S.ingr[n] = nuovoIng(n); m.f = n ? fattore(x.desc, x.um, n, x.q) : 1; }
+  else m.f = num(v) || 0;
   salva(); mostra();
 }
 function acquistiDaFatture() {
@@ -508,18 +512,20 @@ function acquistiDaFatture() {
 function applicaCosti() {
   // Storico per ingrediente e fornitore: si accumula tra un caricamento e l'altro (stesso prodotto e stesso periodo = sovrascritto, non contato due volte)
   S.storico = S.storico || {};
-  gruppiFatture().forEach(x => { if (!x.n) return; S.mappa[x.k] = {n: x.n, f: x.f}; if (!(x.q * x.f > 0)) return;
+  gruppiFatture().forEach(x => { if (!x.n) return; S.mappa[x.k] = {n: x.n, f: x.f}; if (!(x.eur > 0)) return; // salta omaggi (0 €)
     const h = S.storico[x.n] = S.storico[x.n] || {}, f = h[x.forn] = h[x.forn] || {};
-    f[x.k + "|" + x.d0 + "|" + x.d1] = {q: x.q * x.f, e: x.eur, d: x.d1}; });
-  const fatti = [];
+    f[x.k + "|" + x.d0 + "|" + x.d1] = {q: x.f > 0 ? x.q * x.f : 0, e: x.eur, d: x.d1}; }); // q = 0 se manca il fattore: conta per la spesa, non per il prezzo
+  const fatti = [], dubbi = [];
   Object.keys(S.storico).filter(n => S.ingr[n]).forEach(n => {
-    // fornitore principale = quello da cui abbiamo comprato più quantità; il prezzo è quello del suo acquisto più recente
-    const forn = Object.entries(S.storico[n]).map(([nome, v]) => { const L = Object.values(v); const q = L.reduce((s, a) => s + a.q, 0); const ult = L.reduce((m, a) => a.d > m ? a.d : m, "");
-      const R = L.filter(a => a.d.slice(0, 7) === ult.slice(0, 7)); return {nome, q, ult, c: R.reduce((s, a) => s + a.e, 0) / R.reduce((s, a) => s + a.q, 0)}; }).sort((a, b) => b.q - a.q);
-    const p = forn[0]; if (!p || !isFinite(p.c)) return;
+    // fornitore principale = quello su cui abbiamo speso di più per questo ingrediente; il prezzo è quello del suo ultimo mese con quantità note
+    const forn = Object.entries(S.storico[n]).map(([nome, v]) => { const L = Object.values(v), e = L.reduce((s, a) => s + a.e, 0), Q = L.filter(a => a.q > 0);
+      const ult = Q.reduce((m, a) => a.d > m ? a.d : m, ""), R = Q.filter(a => a.d.slice(0, 7) === ult.slice(0, 7));
+      return {nome, e, ult, c: R.length ? R.reduce((s, a) => s + a.e, 0) / R.reduce((s, a) => s + a.q, 0) : NaN}; }).sort((a, b) => b.e - a.e);
+    const p = forn[0]; if (!p) return;
+    if (!isFinite(p.c)) { dubbi.push(`${n.replace(/_/g, " ")}: da ${p.nome.split(" ")[0]} manca il fattore (peso/pezzi), costo non cambiato`); return; }
     S.ingr[n].costo = Math.round(p.c * 1000) / 1000; S.ingr[n].fonte = "fattura " + p.nome.split(" ")[0] + " " + p.ult.split("-").reverse().join("/");
     fatti.push(`${n.replace(/_/g, " ")}: ${eur(S.ingr[n].costo)}/${S.ingr[n].u} (${p.nome.split(" ")[0]}${forn.length > 1 ? ", ignorati: " + forn.slice(1).map(f => f.nome.split(" ")[0]).join(", ") : ""})`); });
-  salva(); alert(fatti.length ? "Costi aggiornati (fornitore principale = quello da cui compriamo di più):\n" + fatti.join("\n") : "Nessun ingrediente collegato."); mostra();
+  salva(); alert(fatti.length ? "Costi aggiornati (fornitore principale = quello su cui spendiamo di più):\n" + fatti.join("\n") + (dubbi.length ? "\n\nDA COMPLETARE (riquadro giallo nella colonna Fattore):\n" + dubbi.join("\n") : "") : "Nessun ingrediente collegato."); mostra();
 }
 function selCol(id, campo, facolt) {
   const f = F[id];
@@ -696,6 +702,7 @@ function mostra(tieniFocus) {
   $("main").innerHTML = VISTE.find(v => v[0] === vista)[2]();
   if (pos != null) { const c = $("cerca"); c.focus(); c.setSelectionRange(pos, pos); }
 }
+if (S.vFatt !== 2) { S.storico = {}; S.mappa = {}; for (const n of Object.keys(S.ingr)) if (/^fattura /.test(S.ingr[n].fonte || "")) { S.ingr[n].costo = null; S.ingr[n].fonte = ""; } S.vFatt = 2; } // v2: regole di abbinamento corrette, si ricalcola tutto dallo ZIP
 for (const [n, c] of Object.entries(COSTI_FATTURE)) if (S.ingr[n] && S.ingr[n].costo == null) { S.ingr[n].costo = c; S.ingr[n].fonte = "fatture ago–nov 2026"; } // non tocca i costi già inseriti
 salva();
 mostra();
