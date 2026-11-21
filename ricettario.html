@@ -442,7 +442,7 @@ async function caricaFatture(files) {
   mostra();
 }
 const INDOVINA = [[/sottilett/, "sottiletta"], [/salsa.*cheddar|cheddar.*salsa/, "salsa_cheddar"], [/harissa/, "salsa_harissa"], [/barbecue|\bbbq\b/, "salsa_bb"],
-  [/maionese(?!.*monodose)/, "maionese"], [/ketchup(?!.*monodose)/, "ketchup"], [/surgelata.?impasto|impasto da 1[0-9]0/, "impasto"], [/base 36x21/, "impasto_pala"],
+  [/maionese(?!.*monodose)/, "maionese"], [/ketchup(?!.*monodose)/, "ketchup"], [/surgelata.?impasto|impasto da 1[0-9]0|piadin/, "piadina"], [/base 36x21/, "impasto_pala"],
   [/panini.*ciabatt|ciabattin/, "pane_panino"], [/mozzarella.*(alta dig|100 ?gr)/, "mozzarella_fresca"],
   [/refosco.*0[,.]375/, "refosco_0375"], [/refosco/, "refosco_075"], [/ribolla.*0[,.]375/, "ribolla_0375"], [/ribolla/, "ribolla_075"],
   [/sauvignon.*0[,.]375/, "sauvignon_0375"], [/sauvignon/, "sauvignon_075"], [/traminer.*0[,.]375/, "traminer_0375"], [/traminer/, "traminer_075"], [/dippers/, "patate_dippers"], [/chips/, "patatine_chips"], [/patate.*(9x9|regular|stick|fritt|surgel)|^patatine/, "patatine"],
